@@ -1,3 +1,3 @@
-# FieldDataCollection_TypicalHardwareSetups_PowerDistribution_ShorePowerArchitecture
+# FeatureExtraction_Association_PointToPointAssociation
 Last update: 2022-01-21
-Power architecture to enable "shore power" options, e.g. power sourced from batteries that are switchable to wall power or other sources
+Codes to perform point-to-point association tests. For example, these can find when a point exists in one XY dataset but not the other.
