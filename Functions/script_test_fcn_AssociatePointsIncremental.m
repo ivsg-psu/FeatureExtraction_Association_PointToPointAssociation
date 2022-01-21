@@ -226,5 +226,5 @@ for locInd = 1:length(xyData{3})
         end
     end
     fprintf("%d features in the rover data set appear to be duplicates\n",sum(duplicate));
-    pause(0.2);
+    pause(0.3);
 end
