@@ -1,6 +1,6 @@
-% script_test_fcn_Dataset_inferPrimitive.m
+% script_test_fcn_Patch_inferPrimitive.m
 % This is a script to exercise the function:
-% fcn_Dataset_inferPrimitive.m
+% fcn_Patch_inferPrimitive.m
 
 % This script was written on 2022_01_21 by C. Beal
 % Questions or comments? cbeal@bucknell.edu
@@ -43,7 +43,7 @@ testPatches3 = [testPatches; testPatches];
 fprintf('Before call A to inferPrimitive, testPatches.primitive and testPatches.primparams are:\n');
 testPatches.primitive
 testPatches.primparams
-testPatches = fcn_Dataset_inferPrimitive(testPatches2);
+testPatches = fcn_Patch_inferPrimitive(testPatches2);
 fprintf('After call A to inferPrimitive, testPatches.primitive and testPatches.primparams are:\n');
 testPatches.primitive
 testPatches.primparams
@@ -56,33 +56,23 @@ axis equal  % Set the axes to be equal spacing for spatial plotting
 grid on     % Turn on the reference grid
 
 % Plot the relevant patch before the fit, for reference
-[h5,hpts5] = fcn_Dataset_plotPatch(testPatches2,5);    % Plot the patches with the definition points
+[h5,hpts5] = fcn_Patch_plotPatch(testPatches2,5);    % Plot the patches with the definition points
 
 % Find the best fit for all of the objects in the array of patches and plot
 fprintf('Before call B to inferPrimitive, testPatches2.primitive and testPatches2.primparams are:\n');
 testPatches2.primitive
 testPatches2.primparams
-testPatches2 = fcn_Dataset_inferPrimitive(testPatches2,5);
+testPatches2 = fcn_Patch_inferPrimitive(testPatches2,5);
 fprintf('After call B to inferPrimitive, testPatches2.primitive and testPatches2.primparams are:\n');
 testPatches2.primitive
 testPatches2.primparams
 
-<<<<<<< HEAD:Functions/script_test_fcn_Patch_inferPrimitive.m
-% Insert the points into the patch structure
-testPatches(2) = fcn_Patch_insertPoints(testPatches(2),[x y]);
 
-% Replot the data
-delete(h(2))
-delete(hpts(2))
-[h(2),hpts(2)] = fcn_Patch_plotPatch(testPatches,5,2);
-delete(hbb(2));
-[testPatches,hbb(2)] = fcn_Patch_determineAABB(testPatches,5,2); % Determine and plot the axis-aligned bounding boxes
-=======
 % Find the best fit for the third object in the array of patches (without plotting)
 fprintf('Before call C to inferPrimitive, testPatches3.primitive and testPatches3.primparams are:\n');
 testPatches3.primitive
 testPatches3.primparams
-testPatches3(3) = fcn_Dataset_inferPrimitive(testPatches3(3));
+testPatches3(3) = fcn_Patch_inferPrimitive(testPatches3(3));
 fprintf('After call C to inferPrimitive, testPatches3.primitive and testPatches3.primparams are:\n');
 testPatches3.primitive
 testPatches3.primparams
@@ -93,26 +83,15 @@ clf         % Clear the figure for a new run of this script
 hold on     % Turn on hold to plot patches, points, and fits
 axis equal  % Set the axes to be equal spacing for spatial plotting
 grid on     % Turn on the reference grid
->>>>>>> ce7f53c72d0990d0022a2d909815c1f656e5d143:Functions/script_test_fcn_Dataset_inferPrimitive.m
 
 % Plot the relevant patch before the fit, for reference
-[h6,hpts6] = fcn_Dataset_plotPatch(testPatches3(2),6);    % Plot the patches with the definition points
+[h6,hpts6] = fcn_Patch_plotPatch(testPatches3(2),6);    % Plot the patches with the definition points
 
-<<<<<<< HEAD:Functions/script_test_fcn_Patch_inferPrimitive.m
-% Get rid of any existing primitives on the plot
-if(exist('hprim','var'))
-    delete(hprim)
-end
-% Fit and plot the best primitives (at the moment, this does only circles)
-[testPatches, hprim] = fcn_Patch_inferPrimitive(testPatches,5);
-=======
 % Find the best fit for the second object in the array of patches and plot it
 fprintf('Before call D to inferPrimitive, testPatches3.primitive and testPatches3.primparams are:\n');
 testPatches3.primitive
 testPatches3.primparams
-testPatches3(2) = fcn_Dataset_inferPrimitive(testPatches3(2),6);
+testPatches3(2) = fcn_Patch_inferPrimitive(testPatches3(2),6);
 fprintf('After call D to inferPrimitive, testPatches3.primitive and testPatches3.primparams are:\n');
 testPatches3.primitive
 testPatches3.primparams
->>>>>>> ce7f53c72d0990d0022a2d909815c1f656e5d143:Functions/script_test_fcn_Dataset_inferPrimitive.m
-

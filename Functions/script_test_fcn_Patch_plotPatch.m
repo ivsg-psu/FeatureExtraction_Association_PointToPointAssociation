@@ -1,6 +1,6 @@
-% script_test_fcn_Dataset_plotPatch.m
+% script_test_fcn_Patch_plotPatch.m
 % This is a script to exercise the function:
-% fcn_Dataset_plotPatch.m
+% fcn_Patch_plotPatch.m
 
 % This script was written on 2022_01_26 by C. Beal
 % Questions or comments? cbeal@bucknell.edu
@@ -38,14 +38,14 @@ testPatches(2).pointsY = [8.83211678832116; 20.2189781021898; 28.1021897810219; 
 
 % Plot all of the patches (with points) in the patch array on a new figure
 % with no return arguments
-fcn_Dataset_plotPatch(testPatches);
+fcn_Patch_plotPatch(testPatches);
 f1 = gcf;
 fprintf("\nCall A: At this point, you should have one figure open with an orange and a gray patch plotted.\n\n");
 pause();
 
 % Plot all of the patches (with points) in the patch array and save a vector
 % of handles to each of the patch objects and point plot objects
-[h2,hpts2] = fcn_Dataset_plotPatch(testPatches);
+[h2,hpts2] = fcn_Patch_plotPatch(testPatches);
 f2 = gcf;
 fprintf("\nCall B: At this point, you should have a second figure open with an orange and a gray patch plotted\nand the 2x1 handle vectors h2 and hpts2 in the workspace.\n\n");
 whos
@@ -53,7 +53,7 @@ pause();
 
 % Plot a single patch (with points) from the patch array and save the
 % vector of handles to the patch object and point plot object
-[h3,hpts3] = fcn_Dataset_plotPatch(testPatches(2));
+[h3,hpts3] = fcn_Patch_plotPatch(testPatches(2));
 f3 = gcf;
 fprintf("\nCall C: At this point, you should have a third figure open with only the gray patch plotted and\nthe 1x1 handle variables h3 and hpts3 in the workspace.\n\n");
 whos
@@ -67,7 +67,7 @@ grid on     % Turn on the reference grid
 
 % Plot all of the patches (with points) in the patch array into the
 % provided figure and save the vectors of handles
-[h4,hpts4] = fcn_Dataset_plotPatch(testPatches,4);
+[h4,hpts4] = fcn_Patch_plotPatch(testPatches,4);
 f4 = gcf;
 fprintf("\nCall D: At this point, you should have figure 4 (specifically) open with an orange and a gray patch plotted.\n\n");
 pause();
@@ -76,7 +76,7 @@ pause();
 % the second patch) and add the handles for the plot objects to the handle
 % vectors
 figure(f3)          % Foreground the third figure for the user to see
-[h3(2,1),hpts3(2,1)] = fcn_Dataset_plotPatch(testPatches,f3,1);
+[h3(2,1),hpts3(2,1)] = fcn_Patch_plotPatch(testPatches,f3,1);
 fprintf("\nCall E: At this point, the third figure created (initially with only the gray patch) should have the orange patch added.\nThe handle variables h3 and hpts3 should now be 2x1 to reflect the new plot objects.\n\n");
 whos
 pause();
