@@ -11,22 +11,22 @@ dot = @(x,y) x(:)'*y(:)
 % hold on
 % axis equal
 % Set the title header
-% UserData.title_header = sprintf('Dataset %.0d of %.0d',1,3);
+% UserData.title_header = sprintf('Points %.0d of %.0d',1,3);
 % % Save the results
 % set(gcf,'UserData',UserData);
-% inputData = fcn_Dataset_fillSetViaUserInputs(9);
+% inputData = fcn_Points_fillSetViaUserInputs(9);
 % xyData{1} = inputData;
 % % Set the title header
-% UserData.title_header = sprintf('Dataset %.0d of %.0d',2,3);
+% UserData.title_header = sprintf('Points %.0d of %.0d',2,3);
 % % Save the results
 % set(gcf,'UserData',UserData);
-% inputData = fcn_Dataset_fillSetViaUserInputs(9);
+% inputData = fcn_Points_fillSetViaUserInputs(9);
 % xyData{2} = inputData;
 % % Set the title header
-% UserData.title_header = sprintf('Dataset %.0d of %.0d',3,3);
+% UserData.title_header = sprintf('Points %.0d of %.0d',3,3);
 % % Save the results
 % set(gcf,'UserData',UserData);
-% inputData = fcn_Dataset_fillSetViaUserInputs(9);
+% inputData = fcn_Points_fillSetViaUserInputs(9);
 % xyData{3} = inputData;
 
 % Assign a region of interest around the rover
@@ -36,7 +36,7 @@ ROIradius = 20;
 sigma = 3; % meters
 
 % % Load up some data (simple xy points for now)
-% %xyData = fcn_Dataset_fillSampleSets;
+% %xyData = fcn_Points_fillSampleSets;
 load testDatasetVehicle.mat
 
 %% Plot the data (known to be two sets for now)

@@ -1,5 +1,5 @@
-function dataXY = fcn_Dataset_fillSetViaUserInputs(fig_num,varargin)
-% fcn_Dataset_fillSetViaUserInputs
+function dataXY = fcn_Points_fillSetViaUserInputs(fig_num,varargin)
+% fcn_Points_fillSetViaUserInputs
 % A function for the user to click on the figure to generate XY data.
 % Points are collected and plotted until the user double clicks. If the
 % user right-clicks anywhere in the plot, the last point is deleted. Once
@@ -7,7 +7,7 @@ function dataXY = fcn_Dataset_fillSetViaUserInputs(fig_num,varargin)
 %
 % FORMAT:
 %
-%      dataXY = fcn_Dataset_fillSetViaUserInputs(fig_num)
+%      dataXY = fcn_Points_fillSetViaUserInputs(fig_num)
 %
 % INPUTS:
 %
@@ -21,9 +21,9 @@ function dataXY = fcn_Dataset_fillSetViaUserInputs(fig_num,varargin)
 % EXAMPLES:
 %
 %      % BASIC example
-%      dataXY = fcn_Dataset_fillSetViaUserInputs(1)
+%      dataXY = fcn_Points_fillSetViaUserInputs(1)
 %
-% See the script: script_test_fcn_Dataset_fillSetViaUserInputs
+% See the script: script_test_fcn_Points_fillSetViaUserInputs
 % for a full test suite.
 %
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's
@@ -87,7 +87,7 @@ end
 
 if isempty(callback_type)
     % Make a new figure, initializing all data and handles within
-    fcn_Dataset_fillSetViaUserInputs_startPlot(fig_num);
+    fcn_Points_fillSetViaUserInputs_startPlot(fig_num);
     UserData = get(gcf,'UserData');
     while UserData.flag_is_done == 0
         % Wait for the figure to be done
@@ -234,7 +234,7 @@ if flag_do_debug
 end
 end
 
-function fcn_Dataset_fillSetViaUserInputs_startPlot(fig_num)
+function fcn_Points_fillSetViaUserInputs_startPlot(fig_num)
 % Decide the number of points to use (maximum), initialize data and values
 num_points = 1000;
 data = nan*ones(num_points,2);
@@ -265,8 +265,8 @@ set(current_fig,'UserData',UserData);
 % Save user data into the current figure, associating movement and clicking
 % functions to specific functions
 set(current_fig, 'WindowButtonMotionFcn',...
-    @fcn_Dataset_fillSetViaUserInputs, ...
-    'WindowButtonDownFcn',@fcn_Dataset_fillSetViaUserInputs);
+    @fcn_Points_fillSetViaUserInputs, ...
+    'WindowButtonDownFcn',@fcn_Points_fillSetViaUserInputs);
 end
 
 

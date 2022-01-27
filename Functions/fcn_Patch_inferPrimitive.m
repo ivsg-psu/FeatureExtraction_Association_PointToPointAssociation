@@ -1,12 +1,12 @@
-function [patchArray, varargout] = fcn_Dataset_inferPrimitive(patchArray,varargin)
-% fcn_Dataset_inferPrimitive
+function [patchArray, varargout] = fcn_Patch_inferPrimitive(patchArray,varargin)
+% fcn_Patch_inferPrimitive
 % Infer the most appropriate 2D primitive shape (rectangle, circle, or
 % irregular). This may be extended into 3d in the future with truncated 
 % rectangular pyramids and truncated cones as the primitives.
 %
 % FORMAT:
 %
-%       [patchArray, varargout] = fcn_Dataset_inferPrimitive(patchArray,{fig_num},{indices})
+%       [patchArray, varargout] = fcn_Patch_inferPrimitive(patchArray,{fig_num},{indices})
 %
 % INPUTS:
 %
@@ -33,13 +33,13 @@ function [patchArray, varargout] = fcn_Dataset_inferPrimitive(patchArray,varargi
 %
 % DEPENDENCIES:
 %
-%      fcn_Dataset_determineAABB
+%      fcn_Patch_determineAABB
 %
-%      ## NOT CURRENTLY USED: fcn_DataSet_checkInputsToFunctions
+%      ## NOT CURRENTLY USED: fcn_Patch_checkInputsToFunctions
 %
 % EXAMPLES:
 %
-%       See the script: script_test_fcn_Dataset_inferPrimitive.m for a full test
+%       See the script: script_test_fcn_Patch_inferPrimitive.m for a full test
 %       suite.
 %
 % This function was written by C. Beal
@@ -119,7 +119,7 @@ for i_patch = 1:NumPatches
     % Make sure the axis-aligned bounding box is populated
     if isempty(patchArray(idxVec(i_patch)).aabb)
         % Update the axis-aligned bounding box (aabb)
-        patchArray(idxVec(i_patch)) = fcn_Dataset_determineAABB(patchArray(idxVec(i_patch)));
+        patchArray(idxVec(i_patch)) = fcn_Patch_determineAABB(patchArray(idxVec(i_patch)));
     end
     % Set the initial guess for the center of the circle to the center of the bounding box
     x0 = [mean(patchArray(idxVec(i_patch)).aabb([1 3])); mean(patchArray(idxVec(i_patch)).aabb([2 4]))];

@@ -1,7 +1,6 @@
-function fcn_Dataset_checkInputsToFunctions(...
-    variable,variable_type_string)
+function fcn_Points_checkInputsToFunctions(variable,variable_type_string)
 
-% fcn_Dataset_checkInputsToFunctions
+% fcn_Points_checkInputsToFunctions
 % Checks the variable types commonly used in the Dataset class to ensure that
 % they are correctly formed. This function is typically called at the top
 % of most Dataset class functions. The input is a variable and a string
@@ -9,14 +8,13 @@ function fcn_Dataset_checkInputsToFunctions(...
 % they are compatible. For example, the 'dataset' type variables in the class
 % function are N x 2 arrays of [x y] pairs; if someone had a dataset variable
 % called "data_example", they could check that this fit the dataset type by
-% calling fcn_Dataset_checkInputsToFunctions(dataset_example,'dataset'). This
+% calling fcn_Points_checkInputsToFunctions(dataset_example,'dataset'). This
 % function would then check that the array was N x 2, and if it was not, it
 % would send out an error warning.
 %
 % FORMAT:
 %
-%      fcn_Dataset_checkInputsToFunctions(...
-%      variable,variable_type_string)
+%      fcn_Points_checkInputsToFunctions(variable,variable_type_string)
 %
 % INPUTS:
 %
@@ -59,7 +57,7 @@ function fcn_Dataset_checkInputsToFunctions(...
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_Path_checkInputsToFunctions
+% See the script: script_test_fcn_Points_checkInputsToFunctions
 % for a full test suite.
 %
 % DEPENDENCIES:

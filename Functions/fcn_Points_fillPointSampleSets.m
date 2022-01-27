@@ -1,11 +1,11 @@
-function datasets_array = fcn_Datasets_fillSampleSets
-% fcn_Datasets_fillSampleSets
+function datasets_array = fcn_Points_fillSampleSets
+% fcn_Points_fillSampleSets
 % Produces dummy sample datasets. Note: can go into the function and change
 % flag to allow user-selected datasets.
 %
 % FORMAT:
 %
-%       datasets_array = fcn_Datasets_fillSampleSets
+%       datasets_array = fcn_Points_fillSampleSets
 %
 % INPUTS:
 %
@@ -22,7 +22,7 @@ function datasets_array = fcn_Datasets_fillSampleSets
 % EXAMPLES:
 %
 %       See the script:
-%       script_test_fcn_Datasets_fillSampleSets.m for a full
+%       script_test_fcn_Points_fillSampleSets.m for a full
 %       test suite.
 %
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's

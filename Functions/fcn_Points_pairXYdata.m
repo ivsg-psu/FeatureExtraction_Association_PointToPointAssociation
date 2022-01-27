@@ -1,6 +1,6 @@
-function [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pairXYdata(xyDataA,xyDataB,varargin)
+function [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyDataA,xyDataB,varargin)
 
-% fcn_Dataset_pairXYdata
+% fcn_Points_pairXYdata
 % Determines the closest pairs of matching X,Y data points from two
 % different data sets of (potentially) different length. The algorithm uses
 % a "mutual" pairing approach, where the nearest neighbor point is computed
@@ -14,7 +14,7 @@ function [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pair
 %
 % FORMAT:
 %
-%       [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pairXYdata(xyDataA,xyDataB,(maxDist))
+%       [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyDataA,xyDataB,(maxDist))
 %
 % INPUTS:
 %
@@ -38,7 +38,7 @@ function [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pair
 % EXAMPLES:
 %
 %       See the script:
-%       script_test_fcn_Dataset_pairXYdata.m for a full
+%       script_test_fcn_Points_pairXYdata.m for a full
 %       test suite.
 %
 % This function was written on 2022_01_21 by C. Beal
@@ -60,7 +60,7 @@ if flag_check_inputs == 1
     end
     
     % Check the Dataset variables (not yet implemented fully)
-    % fcn_Dataset_checkInputsToFunctions(Dataset, 'dataset');
+    % fcn_Points_checkInputsToFunctions(Dataset, 'dataset');
 
 end
 

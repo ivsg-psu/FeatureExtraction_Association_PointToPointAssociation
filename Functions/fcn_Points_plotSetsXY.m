@@ -1,10 +1,10 @@
-function h = fcn_Dataset_plotSetsXY(datasets,varargin)
-% fcn_Dataset_plotSetsXY
+function h = fcn_Points_plotSetsXY(datasets,varargin)
+% fcn_Points_plotSetsXY
 % Plots the XY positions of all datasets existing in a data structure
 %
 % FORMAT: 
 %
-%       h = fcn_Dataset_plotSetsXY(datasets,{fig_num})
+%       h = fcn_Points_plotSetsXY(datasets,{fig_num})
 %
 % INPUTS:
 %
@@ -21,11 +21,11 @@ function h = fcn_Dataset_plotSetsXY(datasets,varargin)
 %
 % DEPENDENCIES:
 %
-%      fcn_DataSet_checkInputsToFunctions
+%      fcn_Points_checkInputsToFunctions
 %
 % EXAMPLES:
 %      
-%       See the script: script_test_fcn_Dataset_plotSetsXY.m for a full test
+%       See the script: script_test_fcn_Points_plotSetsXY.m for a full test
 %       suite. 
 %
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's

@@ -1,10 +1,10 @@
-function [h, hpts] = fcn_Dataset_plotPatch(patchArray,varargin)
-% fcn_Dataset_plotPatch
+function [h, hpts] = fcn_Patch_plotPatch(patchArray,varargin)
+% fcn_Patch_plotPatch
 % Plots a visual representation of the objects in a patch structure array
 %
 % FORMAT: 
 %
-%       [h,hpts] = fcn_Dataset_plotPatch(patchArray,{fig_num},{indices})
+%       [h,hpts] = fcn_Patch_plotPatch(patchArray,{fig_num},{indices})
 %
 % INPUTS:
 %
@@ -28,11 +28,11 @@ function [h, hpts] = fcn_Dataset_plotPatch(patchArray,varargin)
 %
 % DEPENDENCIES:
 %
-%      ## NOT CURRENTLY USED: fcn_DataSet_checkInputsToFunctions
+%      ## NOT CURRENTLY USED: fcn_Patch_checkInputsToFunctions
 %
 % EXAMPLES:
 %      
-%       See the script: script_test_fcn_Dataset_plotPatch.m for a full test
+%       See the script: script_test_fcn_Patch_plotPatch.m for a full test
 %       suite. 
 %
 % This function was written by C. Beal

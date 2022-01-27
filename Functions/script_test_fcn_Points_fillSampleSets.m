@@ -1,6 +1,6 @@
-% script_test_fcn_Dataset_fillSampleSets.m
+% script_test_fcn_Points_fillSampleSets.m
 % This is a script to exercise the function:
-% fcn_Path_fillSampleSets.m
+% fcn_Points_fillSampleSets.m
 
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's
 % script_test_fcn_Path_fillSamplePaths
@@ -14,7 +14,7 @@ close all
 clc
 
 % Call the function to fill in an array of "dataset" type
-datasets_array = fcn_Dataset_fillSampleSets;
+datasets_array = fcn_Points_fillSampleSets;
 
 % We can even save one of these as a single "dataset"
 single_path = datasets_array{1};

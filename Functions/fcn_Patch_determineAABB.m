@@ -1,11 +1,11 @@
-function [patchArray, varargout] = fcn_Dataset_determineAABB(patchArray,varargin)
-% fcn_Dataset_determineAABB
+function [patchArray, varargout] = fcn_Patch_determineAABB(patchArray,varargin)
+% fcn_Patch_determineAABB
 % Determine the axis-aligned bounding box for a patch structure or array of
 % patch structures
 %
 % FORMAT:
 %
-%       patchArray = fcn_Dataset_determineAABB(patchArray,{fig_num},{indices})
+%       patchArray = fcn_Patch_determineAABB(patchArray,{fig_num},{indices})
 %
 % INPUTS:
 %
@@ -32,11 +32,11 @@ function [patchArray, varargout] = fcn_Dataset_determineAABB(patchArray,varargin
 %
 % DEPENDENCIES:
 %
-%      ## NOT CURRENTLY USED: fcn_DataSet_checkInputsToFunctions
+%      ## NOT CURRENTLY USED: fcn_Patch_checkInputsToFunctions
 %
 % EXAMPLES:
 %
-%       See the script: script_test_fcn_Dataset_determineAABB.m for a full test
+%       See the script: script_test_fcn_Patch_determineAABB.m for a full test
 %       suite.
 %
 % This function was written by C. Beal

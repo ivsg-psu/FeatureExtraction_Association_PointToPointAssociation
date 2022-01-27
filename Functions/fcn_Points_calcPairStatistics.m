@@ -1,5 +1,5 @@
-function [errRMS,errVar,meanShift] = fcn_Dataset_calcPairStatistics(pairedXYdata)
-% fcn_Dataset_calcPairStatistics
+function [errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(pairedXYdata)
+% fcn_Points_calcPairStatistics
 % Calculates the statistics of the errors between two sets of paired XY
 % data points and an overall X,Y map shift to match the centroids of the
 % data sets.
@@ -7,7 +7,7 @@ function [errRMS,errVar,meanShift] = fcn_Dataset_calcPairStatistics(pairedXYdata
 %
 % FORMAT:
 %
-%       [errRMS,errVar,meanShift = fcn_Dataset_calcPairStatistics(pairedXYdata)
+%       [errRMS,errVar,meanShift = fcn_Points_calcPairStatistics(pairedXYdata)
 %
 % INPUTS:
 %
@@ -27,7 +27,7 @@ function [errRMS,errVar,meanShift] = fcn_Dataset_calcPairStatistics(pairedXYdata
 % EXAMPLES:
 %
 %       See the script:
-%       script_test_fcn_Dataset_calcPairStatistics.m for a full
+%       script_test_fcn_Points_calcPairStatisticss.m for a full
 %       test suite.
 %
 % This function was written on 2022_01_21 by C. Beal

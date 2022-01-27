@@ -1,6 +1,6 @@
-% script_test_fcn_Dataset_fillSetViaUserInputs
+% script_test_fcn_Points_fillSetViaUserInputs
 % This is a script to exercise the function:
-% fcn_Dataset_fillSetViaUserInputs.m
+% fcn_Points_fillSetViaUserInputs.m
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's
 % script_test_fcn_Path_fillPathViaUserInputs
 % Questions or comments? sbrennan@psu.edu 
@@ -46,7 +46,7 @@ if 1==0  % Intentionally comment this out so that doesn't autorun. Forces user t
         % Save the results
         set(gcf,'UserData',UserData);
         
-        dataXY = fcn_Dataset_fillSetViaUserInputs(fig_num);
+        dataXY = fcn_Points_fillSetViaUserInputs(fig_num);
         dataset_array{i_set} = dataXY;
     end
     

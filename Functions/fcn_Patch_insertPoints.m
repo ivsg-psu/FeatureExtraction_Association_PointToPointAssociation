@@ -1,11 +1,11 @@
-function patchStruct = fcn_Dataset_insertPoints(patchStruct,pointArray)
-% fcn_Dataset_insertPoints
+function patchStruct = fcn_Patch_insertPoints(patchStruct,pointArray)
+% fcn_Patch_insertPoints
 % Inserts a set of points into a patch structure, preserving the CCCW 
 % ordering of the points such that a patch graphics object can be plotted
 %
 % FORMAT: 
 %
-%       updatedPatch = fcn_Dataset_plotPatch(patchStruct,pointArray)
+%       updatedPatch = fcn_Patch_insertPoints(patchStruct,pointArray)
 %
 % INPUTS:
 %
@@ -24,13 +24,13 @@ function patchStruct = fcn_Dataset_insertPoints(patchStruct,pointArray)
 %
 % DEPENDENCIES:
 %
-%      fcn_Dataset_determineAABB
+%      fcn_Patch_determineAABB
 %
-%      ## NOT CURRENTLY USED: fcn_DataSet_checkInputsToFunctions
+%      ## NOT CURRENTLY USED: fcn_Patch_checkInputsToFunctions
 %
 % EXAMPLES:
 %      
-%       See the script: script_test_fcn_Dataset_insertPoints.m for a full test
+%       See the script: script_test_fcn_Patch_insertPoints.m for a full test
 %       suite. 
 %
 % This function was written by C. Beal
@@ -129,4 +129,4 @@ for i = 1:NumPoints
 end
 
 % Update the axis-aligned bounding box (aabb)
-patchStruct = fcn_Dataset_determineAABB(patchStruct);
+patchStruct = fcn_Patch_determineAABB(patchStruct);

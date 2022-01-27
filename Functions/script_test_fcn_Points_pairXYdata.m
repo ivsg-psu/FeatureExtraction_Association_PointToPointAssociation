@@ -1,6 +1,6 @@
-% script_test_fcn_Dataset_pairXYdata.m
+% script_test_fcn_Points_pairXYdata.m
 % This is a script to exercise the function:
-% fcn_Dataset_pairXYdata.m
+% fcn_Points_pairXYdata.m
 
 % This script was written on 2022_01_21 by C. Beal
 % Questions or comments? cbeal@bucknell.edu
@@ -13,22 +13,22 @@
 clearvars
 
 % Load up some data (simple xy points for now)
-% %xyData = fcn_Dataset_fillSampleSets;
+% %xyData = fcn_Points_fillSampleSets;
 %load testDataset1.mat
 load testDatasetVehicle.mat
 
 % Call the pairing function to obtain the matrix of paired XY data without
 % a limiting radius
-%[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pairXYdata(xyData{1},xyData{2});
+%[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyData{1},xyData{2});
 
 % Define a maximum radius within which to consider data points as pairs
 pairRadius = 1.0;
 
 % Call the pairing function to obtain the matrix of paired XY data
-[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Dataset_pairXYdata(xyData{1},xyData{2},pairRadius);
+[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyData{1},xyData{2},pairRadius);
 
 %% Run some statistics on the paired data
-[errRMS,errVar,meanShift] = fcn_Dataset_calcPairStatistics(pairedXYdata(1:numMatches,:));
+[errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(pairedXYdata(1:numMatches,:));
 
 shiftDist = norm(meanShift,2);
 shiftAngle = atan2(meanShift(2),meanShift(1));
