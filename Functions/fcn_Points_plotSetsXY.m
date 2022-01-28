@@ -8,11 +8,11 @@ function h = fcn_Points_plotSetsXY(datasets,varargin)
 %
 % INPUTS:
 %
-%      data: a structure containing subfields of X and Y coordinates in the
-%      following form
-%           data.set{i_set}.X
-%           data.set{i_set}.Y
-%      Note that i_path denotes an array of data sets. Each set will be
+%      datasets: a structure array containing subfields of X and Y 
+%      coordinates in the following form:
+%           datasets{i_set}.X
+%           datasets{i_set}.Y
+%      Note that i_set denotes a data set structure. Each set will be
 %      plotted separately.
 %
 % OUTPUTS:
