@@ -1,4 +1,4 @@
-function dataXY = fcn_Points_fillPointSetViaUserInputs(fig_num,varargin)
+function dataXY = fcn_Points_fillPointSetViaUserInputs(varargin)
 % fcn_Points_fillPointSetViaUserInputs
 % A function for the user to click on the figure to generate XY data.
 % Points are collected and plotted until the user double clicks. If the
@@ -63,14 +63,19 @@ if flag_check_inputs == 1
     % Are there the right number of inputs?
     if nargin > 2
         error('Incorrect number of input arguments')
-    end 
+    end
 end
 
 callback_type = '';
 % Is this a call-back?
 if 2 == nargin
-    callback_details = varargin{1};
+    fig_num = varargin{1};
+    callback_details = varargin{2};
     callback_type = callback_details.EventName;
+elseif 0 == nargin
+    fig_num = figure;
+else
+    fig_num = varargin{1};
 end
 
 
@@ -239,7 +244,6 @@ function fcn_Points_fillPointSetViaUserInputs_startPlot(fig_num)
 num_points = 1000;
 data = nan*ones(num_points,2);
 next_point = 1;
-dataXY = [0 0; 0 1];
 
 % Set up the figure
 current_fig = figure(fig_num);
@@ -259,8 +263,16 @@ UserData.next_point = next_point;
 UserData.h_plot = h_plot;
 UserData.flag_is_done = 0;
 
+% Check to see that a title has been provided
+if ~isfield(UserData,'title_header')
+    UserData.title_header = sprintf('Enter XY point data by clicking');
+end
+
 % Save Userdata to the figure
 set(current_fig,'UserData',UserData);
+
+% Make sure the figure updates with the limits, title, axes labels, etc.
+drawnow
 
 % Save user data into the current figure, associating movement and clicking
 % functions to specific functions

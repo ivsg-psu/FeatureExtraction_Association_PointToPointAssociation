@@ -101,10 +101,10 @@ if ~ishold
     hold on
 end
 
-NumSets = length(datasets.traversal);
-h = zeros(NumTraversals,1);
-for i_path= 1:NumTraversals
-    h(i_path) = plot(datasets.traversal{i_path}.X,datasets.traversal{i_path}.Y,'-o');
+NumSets = length(datasets);
+h = zeros(NumSets,1);
+for i_set= 1:NumSets
+    h(i_set) = plot(datasets{i_set}(:,1),datasets{i_set}(:,2),'o');
 end
 
 % Shut the hold off?
