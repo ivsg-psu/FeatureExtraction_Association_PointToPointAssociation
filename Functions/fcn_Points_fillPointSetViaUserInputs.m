@@ -1,5 +1,5 @@
-function dataXY = fcn_Points_fillSetViaUserInputs(fig_num,varargin)
-% fcn_Points_fillSetViaUserInputs
+function dataXY = fcn_Points_fillPointSetViaUserInputs(fig_num,varargin)
+% fcn_Points_fillPointSetViaUserInputs
 % A function for the user to click on the figure to generate XY data.
 % Points are collected and plotted until the user double clicks. If the
 % user right-clicks anywhere in the plot, the last point is deleted. Once
@@ -7,11 +7,12 @@ function dataXY = fcn_Points_fillSetViaUserInputs(fig_num,varargin)
 %
 % FORMAT:
 %
-%      dataXY = fcn_Points_fillSetViaUserInputs(fig_num)
+%      dataXY = fcn_Points_fillPointSetViaUserInputs({fig_num})
 %
 % INPUTS:
 %
-%      figure_number: an integer specifying which figure to use
+%      (OPTIONAL INPUTS)
+%      fig_num: an integer specifying which figure to use
 %
 % OUTPUTS:
 %
@@ -20,10 +21,11 @@ function dataXY = fcn_Points_fillSetViaUserInputs(fig_num,varargin)
 %
 % EXAMPLES:
 %
-%      % BASIC example
-%      dataXY = fcn_Points_fillSetViaUserInputs(1)
+%      % BASIC examples
+%      dataXY = fcn_Points_fillPointSetViaUserInputs
+%      dataXY = fcn_Points_fillPointSetViaUserInputs(1)
 %
-% See the script: script_test_fcn_Points_fillSetViaUserInputs
+% See the script: script_test_fcn_Points_fillPointSetViaUserInputs
 % for a full test suite.
 %
 % This function was adapted on 2022_01_12 by C. Beal from S. Brennan's
@@ -56,15 +58,12 @@ end
 %              |_|
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % Are the input vectors the right shape?
-% Npoints = length(points(:,1));
 
 if flag_check_inputs == 1
     % Are there the right number of inputs?
-    if nargin < 1 || nargin > 2
+    if nargin > 2
         error('Incorrect number of input arguments')
-    end
-    
+    end 
 end
 
 callback_type = '';
@@ -73,6 +72,7 @@ if 2 == nargin
     callback_details = varargin{1};
     callback_type = callback_details.EventName;
 end
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,7 +87,7 @@ end
 
 if isempty(callback_type)
     % Make a new figure, initializing all data and handles within
-    fcn_Points_fillSetViaUserInputs_startPlot(fig_num);
+    fcn_Points_fillPointSetViaUserInputs_startPlot(fig_num);
     UserData = get(gcf,'UserData');
     while UserData.flag_is_done == 0
         % Wait for the figure to be done
@@ -234,7 +234,7 @@ if flag_do_debug
 end
 end
 
-function fcn_Points_fillSetViaUserInputs_startPlot(fig_num)
+function fcn_Points_fillPointSetViaUserInputs_startPlot(fig_num)
 % Decide the number of points to use (maximum), initialize data and values
 num_points = 1000;
 data = nan*ones(num_points,2);
@@ -265,8 +265,8 @@ set(current_fig,'UserData',UserData);
 % Save user data into the current figure, associating movement and clicking
 % functions to specific functions
 set(current_fig, 'WindowButtonMotionFcn',...
-    @fcn_Points_fillSetViaUserInputs, ...
-    'WindowButtonDownFcn',@fcn_Points_fillSetViaUserInputs);
+    @fcn_Points_fillPointSetViaUserInputs, ...
+    'WindowButtonDownFcn',@fcn_Points_fillPointSetViaUserInputs);
 end
 
 
