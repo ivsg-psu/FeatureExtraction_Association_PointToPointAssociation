@@ -1,5 +1,5 @@
-function dataXY = fcn_Points_fillPointSetViaUserInputs(varargin)
-% fcn_Points_fillPointSetViaUserInputs
+function patchArray = fcn_Patch_fillPatchArrayViaUserInputs(varargin)
+% fcn_Patch_fillPatchArrayViaUserInputs
 % A function for the user to click on the figure to generate XY data.
 % Points are collected and plotted until the user double clicks. If the
 % user right-clicks anywhere in the plot, the last point is deleted. Once
@@ -7,7 +7,7 @@ function dataXY = fcn_Points_fillPointSetViaUserInputs(varargin)
 %
 % FORMAT:
 %
-%      dataXY = fcn_Points_fillPointSetViaUserInputs({fig_num})
+%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs({fig_num})
 %
 % INPUTS:
 %
@@ -16,25 +16,25 @@ function dataXY = fcn_Points_fillPointSetViaUserInputs(varargin)
 %
 % OUTPUTS:
 %
-%      dataXY: matrix (Nx2) representing the X and Y points that the user
-%      clicked on the map
+%      patchArray: structure array patch objects that the user generated
+%                  via clicking in a map and selecting properties
 %
 % EXAMPLES:
 %
 %      % BASIC examples
-%      dataXY = fcn_Points_fillPointSetViaUserInputs
-%      dataXY = fcn_Points_fillPointSetViaUserInputs(1)
+%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs
+%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs(1)
 %
-% See the script: script_test_fcn_Points_fillPointSetViaUserInputs
+% See the script: script_test_fcn_Patch_fillPatchArrayViaUserInputs
 % for a full test suite.
 %
-% This function was adapted on 2022_01_12 by C. Beal from S. Brennan's
+% This function was adapted on 2022_01_28 by C. Beal from S. Brennan's
 % fcn_Path_fillPathViaUserInputs function from the PSU IVSG path library.
 % Questions or comments? sbrennan@psu.edu
 
 % Revision history:
-%      2022_01_12
-%      -- adapted for XY datasets without path ordering
+%      2022_01_28
+%      -- adapted for patch objects in a structure array
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_make_figure = 0;
@@ -92,7 +92,7 @@ end
 
 if isempty(callback_type)
     % Make a new figure, initializing all data and handles within
-    fcn_Points_fillPointSetViaUserInputs_startPlot(fig_num);
+    fcn_Patch_fillPatchArrayViaUserInputs_startPlot(fig_num);
     UserData = get(gcf,'UserData');
     while UserData.flag_is_done == 0
         % Wait for the figure to be done
@@ -239,7 +239,7 @@ if flag_do_debug
 end
 end
 
-function fcn_Points_fillPointSetViaUserInputs_startPlot(fig_num)
+function fcn_Patch_fillPatchArrayViaUserInputs_startPlot(fig_num)
 % Decide the number of points to use (maximum), initialize data and values
 num_points = 1000;
 data = nan*ones(num_points,2);
@@ -248,6 +248,20 @@ next_point = 1;
 % Set up the figure
 current_fig = figure(fig_num);
 
+% Address the right subplot
+subplot(1,2,2)
+% Plot an empty color plot
+R=[1 0; 1 0];
+G=[1 1 0 0];
+B=[0 0 0 1];
+R = interp2(R,8);
+G = interp2(G,8);
+B = interp2(B,8);
+I = uint8(255*cat(3,R,G,B));
+image(I)
+
+% Address the left subplot
+subplot(1,2,1)
 % Plot empty data
 h_plot = plot(data(:,1),data(:,2),'.','Markersize',20);
 xlim([0 100]);
@@ -277,6 +291,6 @@ drawnow
 % Save user data into the current figure, associating movement and clicking
 % functions to specific functions
 set(current_fig, 'WindowButtonMotionFcn',...
-    @fcn_Points_fillPointSetViaUserInputs, ...
-    'WindowButtonDownFcn',@fcn_Points_fillPointSetViaUserInputs);
+    @fcn_Patch_fillPatchArrayViaUserInputs, ...
+    'WindowButtonDownFcn',@fcn_Patch_fillPatchArrayViaUserInputs);
 end

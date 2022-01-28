@@ -85,7 +85,11 @@ end
 % If the user has provided a file name
 if flag_load_from_file
     s = load(pathToDataFile);
-    datasets_array = getfield(s(1),'xyData');
+    sfields = fieldnames(s);
+    if length(sfields) > 1
+        error('Specified file is not formatted for loading an array of points');
+    end
+    datasets_array = getfield(s(1),sfields{1});
 else
     
     datasets_array{1} = [

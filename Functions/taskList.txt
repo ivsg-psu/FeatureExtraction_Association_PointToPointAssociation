@@ -1,8 +1,9 @@
-Scripts to generate points
 Scripts to generate patches
+  - Perhaps generate two subplots (one with the map and one with a colorspace)
+  - The user can click in the map and then in the colorspace to define a patch
+  - Add a UUID (or something similar) for the patch identifier
+  - Add the "irregular" primitive and an empty set of primitive parameters
 Scripts to add noise to patch objects
-Scripts to add noise to point sets
-Test script to see if the noise properties can be recovered from a point set
 Test script to see if the noise properties can be recovered from a patch set
 Function to test a point for proximity and membership relative to a patch
 Script to exercise the proximity and membership function
