@@ -1,7 +1,5 @@
+Update patch scripts to handle degenerate patches with 0, 1, or 2 points
 Scripts to generate patches
-  - Perhaps generate two subplots (one with the map and one with a colorspace)
-  - The user can click in the map and then in the colorspace to define a patch
-  - Add a UUID (or something similar) for the patch identifier
   - Add the "irregular" primitive and an empty set of primitive parameters
 Scripts to add noise to patch objects
 Test script to see if the noise properties can be recovered from a patch set

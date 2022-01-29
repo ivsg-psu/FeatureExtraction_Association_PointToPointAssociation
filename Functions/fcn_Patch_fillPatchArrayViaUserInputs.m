@@ -1,4 +1,4 @@
-function patchArray = fcn_Patch_fillPatchArrayViaUserInputs(varargin)
+function patchStruct = fcn_Patch_fillPatchArrayViaUserInputs(varargin)
 % fcn_Patch_fillPatchArrayViaUserInputs
 % A function for the user to click on the figure to generate XY data.
 % Points are collected and plotted until the user double clicks. If the
@@ -7,7 +7,7 @@ function patchArray = fcn_Patch_fillPatchArrayViaUserInputs(varargin)
 %
 % FORMAT:
 %
-%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs({fig_num})
+%      patchStruct = fcn_Patch_fillPatchArrayViaUserInputs({fig_num})
 %
 % INPUTS:
 %
@@ -16,14 +16,14 @@ function patchArray = fcn_Patch_fillPatchArrayViaUserInputs(varargin)
 %
 % OUTPUTS:
 %
-%      patchArray: structure array patch objects that the user generated
+%      patchStruct: structure array patch objects that the user generated
 %                  via clicking in a map and selecting properties
 %
 % EXAMPLES:
 %
 %      % BASIC examples
-%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs
-%      patchArray = fcn_Patch_fillPatchArrayViaUserInputs(1)
+%      patchStruct = fcn_Patch_fillPatchArrayViaUserInputs
+%      patchStruct = fcn_Patch_fillPatchArrayViaUserInputs(1)
 %
 % See the script: script_test_fcn_Patch_fillPatchArrayViaUserInputs
 % for a full test suite.
@@ -91,16 +91,30 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if isempty(callback_type)
+    % Make a new patch structure
+    patchStruct = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
+    % Fill out the patch id with a new identifier
+    [~,patchStruct(1).id] = fileparts(tempname);
+    % Define the patch as having an irregular primitive
+    patchStruct(1).primitive = 'irregular';
+    % Set the patch color
+    patchStruct(1).color = uisetcolor();
     % Make a new figure, initializing all data and handles within
     fcn_Patch_fillPatchArrayViaUserInputs_startPlot(fig_num);
     UserData = get(gcf,'UserData');
+    % This loop will continue to run until the callback for a double-click
+    % is handled to end point addition
     while UserData.flag_is_done == 0
         % Wait for the figure to be done
         pause(0.15);
         UserData = get(gcf,'UserData');
     end
     current_point = UserData.next_point;
-    dataXY = UserData.data(1:current_point-1,:);
+    % Set the patch point data 
+    patchStruct(1).pointsX = UserData.data(1:current_point-1,1);
+    patchStruct(1).pointsY = UserData.data(1:current_point-1,2);
+    % When this portion of the code finishes, the function is complete
+    % and the patch structure will be returned
     
 else
     switch callback_type
@@ -108,7 +122,6 @@ else
             UserData = get(gcf,'UserData');
             prompt = UserData.title_header;
             
-            % Mouse was moved
             C = get (gca, 'CurrentPoint');
             title_string = sprintf('%s, (X,Y) = %.1f, %.1f',prompt,C(1,1),C(1,2));
             title(gca, title_string);
@@ -152,6 +165,11 @@ else
                     
                     % Save the results
                     set(gcf,'UserData',UserData);
+
+                    % Update the patch structure with the points
+                    patchStruct(1).pointsX = UserData.data(1:current_point-1,1);
+                    patchStruct(1).pointsY = UserData.data(1:current_point-1,2);
+                    
                 case {'alt'}  % Typical right-click - subtracts a point
                     if flag_do_debug
                         fprintf(1,'Right clicked -  X: %.1f, y: %.1f\n',mousePos(1),mousePos(2));
@@ -248,20 +266,6 @@ next_point = 1;
 % Set up the figure
 current_fig = figure(fig_num);
 
-% Address the right subplot
-subplot(1,2,2)
-% Plot an empty color plot
-R=[1 0; 1 0];
-G=[1 1 0 0];
-B=[0 0 0 1];
-R = interp2(R,8);
-G = interp2(G,8);
-B = interp2(B,8);
-I = uint8(255*cat(3,R,G,B));
-image(I)
-
-% Address the left subplot
-subplot(1,2,1)
 % Plot empty data
 h_plot = plot(data(:,1),data(:,2),'.','Markersize',20);
 xlim([0 100]);

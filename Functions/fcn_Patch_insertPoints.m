@@ -104,6 +104,20 @@ NumPoints = size(pointArray,1);
 dot = @(x,y) x(:)'*y(:);
 
 for i = 1:NumPoints
+    % If there are no existing points, start the points array
+    if 0 == length(patchStruct.pointsX)
+        patchStruct.pointsX = pointArray(i,1);
+        patchStruct.pointsY = pointArray(i,2);
+    % If there is only one point, there is no sense of an ordering, so just
+    % add the point to the point vectors
+    elseif 1 == length(patchStruct.pointsX)
+            patchStruct.pointsX = [patchStruct.pointsX(1:end); pointArray(i,1)];
+            patchStruct.pointsY = [patchStruct.pointsY(1:end); pointArray(i,2)]; 
+    % If there are two points, need to determine whether the third point
+    % is to the right or left of the existing line segment
+    elseif 2 == length(patchStruct.pointsX)
+        
+    else
     % Find the closest patch point to the test point
     [closePt,~] = knnsearch([patchStruct.pointsX patchStruct.pointsY],pointArray(i,:),'nsmethod','exhaustive');
     prevPt = mod(closePt-2,length(patchStruct.pointsX))+1;
@@ -125,6 +139,7 @@ for i = 1:NumPoints
             patchStruct.pointsX = [patchStruct.pointsX(1:prevPt); pointArray(i,1); patchStruct.pointsX(closePt:end)];
             patchStruct.pointsY = [patchStruct.pointsY(1:prevPt); pointArray(i,2); patchStruct.pointsY(closePt:end)];
         end
+    end
     end
 end
 
