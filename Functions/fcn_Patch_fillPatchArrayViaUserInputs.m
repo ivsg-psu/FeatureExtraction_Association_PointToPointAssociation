@@ -100,7 +100,7 @@ if isempty(callback_type)
     % Set the patch color
     patchStruct(1).color = uisetcolor();
     % Make a new figure, initializing all data and handles within
-    fcn_Patch_fillPatchArrayViaUserInputs_startPlot(fig_num);
+    fcn_Patch_fillPatchArrayViaUserInputs_startPlot(patchStruct(1),fig_num);
     UserData = get(gcf,'UserData');
     % This loop will continue to run until the callback for a double-click
     % is handled to end point addition
@@ -109,10 +109,8 @@ if isempty(callback_type)
         pause(0.15);
         UserData = get(gcf,'UserData');
     end
-    current_point = UserData.next_point;
     % Set the patch point data 
-    patchStruct(1).pointsX = UserData.data(1:current_point-1,1);
-    patchStruct(1).pointsY = UserData.data(1:current_point-1,2);
+    patchStruct(1) = UserData.patch;
     % When this portion of the code finishes, the function is complete
     % and the patch structure will be returned
     
@@ -130,46 +128,30 @@ else
             mousePos = get (gca, 'CurrentPoint');
             
             % Find the type of click
-            source   = callback_details.Source;
+            source = callback_details.Source;
             mouseType = get(source, 'SelectionType');
             
             switch mouseType
-                case {'normal'}  % Typical left-click - adds a point
+                case {'normal'}  % Typical left-click - adds a point (even if a double-click is also processed)
                     if flag_do_debug
                         fprintf(1,'Left clicked -  X: %.1f, y: %.1f\n',mousePos(1),mousePos(2));
                     end
                     
-                    % Grab the data out of the figure so we can update the plot
+                    % Grab the data out of the figure so we can update the data and the plot
                     UserData = get(gcf,'UserData');
-                    num_points = UserData.num_points;
-                    data = UserData.data;
                     
-                    % Fill in the current point
-                    current_point = UserData.next_point;
-                    data(current_point,1) = mousePos(1,1);
-                    data(current_point,2) = mousePos(1,2);
+                    % Insert the new point into the patch structure
+                    UserData.patch = fcn_Patch_insertPoints(UserData.patch,mousePos(1,1:2));
                     
-                    % Find the point after the current point, and shift data down if "full"
-                    next_point = current_point+1;
-                    if next_point == (num_points+1)
-                        data(1:end-1,:) = data(2:end,:);
-                        next_point = num_points;
-                    end
+                    % Update the plot from the patch structure
+                    delete(UserData.h_patch);
+                    UserData.h_patch = patch(UserData.patch.pointsX,UserData.patch.pointsY,UserData.patch.color);
                     
-                    % Update the plot
-                    set(UserData.h_plot,'XData',data(:,1),'YData',data(:,2));
-                    
-                    %UserData.num_points = num_points;
-                    UserData.data = data;
-                    UserData.next_point = next_point;
-                    
-                    % Save the results
+                    % Save the results so they can be accessed by the
+                    % various callbacks and force a plot update
                     set(gcf,'UserData',UserData);
-
-                    % Update the patch structure with the points
-                    patchStruct(1).pointsX = UserData.data(1:current_point-1,1);
-                    patchStruct(1).pointsY = UserData.data(1:current_point-1,2);
-                    
+                    drawnow
+                                        
                 case {'alt'}  % Typical right-click - subtracts a point
                     if flag_do_debug
                         fprintf(1,'Right clicked -  X: %.1f, y: %.1f\n',mousePos(1),mousePos(2));
@@ -177,26 +159,36 @@ else
                     
                     % Grab the data out of the figure so we can update the plot
                     UserData = get(gcf,'UserData');
-                    num_points = UserData.num_points;
-                    data = UserData.data;
                     
-                    % Go backwards
-                    UserData.next_point = max(UserData.next_point - 1,1);
+                    % Mouse was clicked - find the location
+                    mousePos = get(gca,'CurrentPoint');
+            
+                    % Find the closest point to the mouse click
+                    idx = knnsearch([UserData.patch.pointsX UserData.patch.pointsY],mousePos(1,1:2));
                     
-                    % Fill in the current point
-                    current_point = UserData.next_point;
-                    data(current_point,1) = nan;
-                    data(current_point,2) = nan;
+                    % Remove the closest point and shift the data back
+                    % Handle the case where the index is at the end
+                    if idx == length(UserData.patch.pointsX)
+                        UserData.patch.pointsX = UserData.patch.pointsX(1:end-1);
+                        UserData.patch.pointsY = UserData.patch.pointsY(1:end-1);
+                    % Handle the case where the index is at the start
+                    elseif 1 == idx
+                        UserData.patch.pointsX = UserData.patch.pointsX(2:end);
+                        UserData.patch.pointsY = UserData.patch.pointsY(2:end);
+                    % Handle the case where the index is in the interior
+                    else
+                        UserData.patch.pointsX = [UserData.patch.pointsX(1:idx-1); UserData.patch.pointsX(idx+1:end)];
+                        UserData.patch.pointsY = [UserData.patch.pointsY(1:idx-1); UserData.patch.pointsY(idx+1:end)];
+                    end
                     
-                    % Update the plot
-                    set(UserData.h_plot,'XData',data(:,1),'YData',data(:,2));
+                    % Update the plot from the patch structure
+                    delete(UserData.h_patch);
+                    UserData.h_patch = patch(UserData.patch.pointsX,UserData.patch.pointsY,UserData.patch.color);
                     
-                    % Update the data
-                    UserData.data = data;
-                    
-                    % Save the results
+                    % Save the results so they can be accessed by the
+                    % various callbacks and force a plot update
                     set(gcf,'UserData',UserData);
-                    
+                    drawnow
                     
                 case {'open'} % Typical double click - ends the routine
                     if flag_do_debug
@@ -204,28 +196,23 @@ else
                     end
                     
                     % Shut off callbacks
-                    set(gcf, ...
-                        'WindowButtonMotionFcn',{}, ...
+                    set(gcf,'WindowButtonMotionFcn',{}, ...
                         'WindowButtonDownFcn',{});
                     
                     % Grab the data out of the figure so we can update it
                     UserData = get(gcf,'UserData');
                     
-                    % Set the flag that we are done
+                    % Set the flag to update the preceding callbacks that
+                    % the process is complete
                     UserData.flag_is_done = 1;
                     
-                    % Save the results
+                    % Save the results so they can be accessed by the
+                    % various callbacks and force a plot update
                     set(gcf,'UserData',UserData);
-                    
-                    if flag_do_debug
-                        disp('DONE');
-                    end
                     
                 otherwise
                     fprintf(1,'Unknown mouse click type: %s\n',mouseType);
             end
-            
-            
             
         otherwise
             fprintf(1,'unknown callback type: %s\n',callback_type);
@@ -257,7 +244,7 @@ if flag_do_debug
 end
 end
 
-function fcn_Patch_fillPatchArrayViaUserInputs_startPlot(fig_num)
+function fcn_Patch_fillPatchArrayViaUserInputs_startPlot(patchStruct,fig_num)
 % Decide the number of points to use (maximum), initialize data and values
 num_points = 1000;
 data = nan*ones(num_points,2);
@@ -266,8 +253,8 @@ next_point = 1;
 % Set up the figure
 current_fig = figure(fig_num);
 
-% Plot empty data
-h_plot = plot(data(:,1),data(:,2),'.','Markersize',20);
+% Plot empty patch
+h_patch = patch([],[],patchStruct.color);
 xlim([0 100]);
 ylim([0 100]);
 
@@ -278,8 +265,9 @@ UserData = get(gcf,'UserData');
 UserData.num_points = num_points;
 UserData.data = data;
 UserData.next_point = next_point;
-UserData.h_plot = h_plot;
+UserData.h_patch = h_patch;
 UserData.flag_is_done = 0;
+UserData.patch = patchStruct;
 
 % Check to see that a title has been provided
 if ~isfield(UserData,'title_header')

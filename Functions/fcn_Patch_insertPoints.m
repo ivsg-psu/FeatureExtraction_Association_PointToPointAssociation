@@ -116,7 +116,21 @@ for i = 1:NumPoints
     % If there are two points, need to determine whether the third point
     % is to the right or left of the existing line segment
     elseif 2 == length(patchStruct.pointsX)
-        
+        crossProd = cross([patchStruct.pointsX(2,1) - patchStruct.pointsX(1,1);...
+            patchStruct.pointsY(2,1) - patchStruct.pointsY(1,1); 0],...
+            [pointArray(i,1) - patchStruct.pointsX(1,1);...
+            pointArray(i,2) - patchStruct.pointsY(1,1); 0]);
+        % If the cross product is negative, the point is to the right of the line segment 
+        % formed by the existing two points and should go in between the two existing points
+        if 1 > crossProd
+            patchStruct.pointsX = [patchStruct.pointsX(1); pointArray(i,1); patchStruct.pointsX(2)];
+            patchStruct.pointsY = [patchStruct.pointsY(1); pointArray(i,2); patchStruct.pointsY(2)];
+        % Otherwise, the point is to the left of the segment and can go after the existing
+        % two points
+        else
+            patchStruct.pointsX = [patchStruct.pointsX; pointArray(i,1)];
+            patchStruct.pointsY = [patchStruct.pointsY; pointArray(i,2)];            
+        end
     else
     % Find the closest patch point to the test point
     [closePt,~] = knnsearch([patchStruct.pointsX patchStruct.pointsY],pointArray(i,:),'nsmethod','exhaustive');
