@@ -175,7 +175,8 @@ else
                     elseif 1 == idx
                         UserData.patch.pointsX = UserData.patch.pointsX(2:end);
                         UserData.patch.pointsY = UserData.patch.pointsY(2:end);
-                    % Handle the case where the index is in the interior
+                    % Handle the case where the index is in the midst of
+                    % the vector
                     else
                         UserData.patch.pointsX = [UserData.patch.pointsX(1:idx-1); UserData.patch.pointsX(idx+1:end)];
                         UserData.patch.pointsY = [UserData.patch.pointsY(1:idx-1); UserData.patch.pointsY(idx+1:end)];

@@ -29,6 +29,7 @@ testPatches = fcn_Patch_fillSamplePatches;
 
 % Create test points using the current figure. Click to add points, hit
 % enter to finish.
+figure(5);
 [x,y] = ginput;
 
 % Insert the points into the patch structure. Save the returned patch
