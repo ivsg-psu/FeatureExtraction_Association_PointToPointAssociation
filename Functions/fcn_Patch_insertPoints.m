@@ -40,13 +40,13 @@ function patchStruct = fcn_Patch_insertPoints(patchStruct,pointArray)
 %     2022_01_25
 %     -- wrote the code
 
-flag_do_debug = 1; % Flag to plot the results for debugging
+flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-
+    
 end
 
 
@@ -119,7 +119,7 @@ for i = 1:NumPoints
     end
     
     % If there are no existing points, start the points array
-    if 0 == length(patchStruct.pointsX)
+    if isempty(patchStruct.pointsX)
         patchStruct.pointsX = pointArray(i,1);
         patchStruct.pointsY = pointArray(i,2);
         % If there is only one point, there is no sense of an ordering, so just
@@ -136,7 +136,7 @@ for i = 1:NumPoints
             pointArray(i,2) - patchStruct.pointsY(1,1); 0]);
         % If the cross product is negative, the point is to the right of the line segment
         % formed by the existing two points and should go in between the two existing points
-        if 1 > crossProd
+        if 1 > crossProd(3)
             patchStruct.pointsX = [patchStruct.pointsX(1); pointArray(i,1); patchStruct.pointsX(2)];
             patchStruct.pointsY = [patchStruct.pointsY(1); pointArray(i,2); patchStruct.pointsY(2)];
             % Otherwise, the point is to the left of the segment and can go after the existing
@@ -147,11 +147,22 @@ for i = 1:NumPoints
         end
     else
         % Find the closest patch point to the test point
-        [closePt,~] = knnsearch([patchStruct.pointsX patchStruct.pointsY],pointArray(i,:),'nsmethod','exhaustive');
-        prevPt = mod(closePt-2,length(patchStruct.pointsX))+1;
-        nextPt = mod(closePt,length(patchStruct.pointsX))+1;
-        dotProd = dot(pointArray(i,:) - [patchStruct.pointsX(closePt) patchStruct.pointsY(closePt)],[patchStruct.pointsX(nextPt) patchStruct.pointsY(nextPt)] - [patchStruct.pointsX(closePt) patchStruct.pointsY(closePt)]);
-        if(0 < dotProd)
+        [closePt,~] = knnsearch([patchStruct.pointsX patchStruct.pointsY],pointArray(i,:),'nsmethod','exhaustive')
+        prevPt = mod(closePt-2,length(patchStruct.pointsX))+1
+        nextPt = mod(closePt,length(patchStruct.pointsX))+1
+        dotProd = dot(pointArray(i,:) - [patchStruct.pointsX(closePt) patchStruct.pointsY(closePt)],[patchStruct.pointsX(nextPt) patchStruct.pointsY(nextPt)] - [patchStruct.pointsX(closePt) patchStruct.pointsY(closePt)])
+        % Check the cross product to avoid the case where the point
+        % could be in a "wedge" between the halfspace defined by the
+        % positive dot product above and the line extending from a
+        % line segment drawn from the previous point to the closest
+        % point. This fails the dot product above, but should still be
+        % placed between the closest point and the next point to avoid
+        % crossing the patch.
+        crossProd = cross([patchStruct.pointsX(closePt,1) - patchStruct.pointsX(prevPt,1);...
+            patchStruct.pointsY(closePt,1) - patchStruct.pointsY(prevPt,1); 0],...
+            [pointArray(i,1) - patchStruct.pointsX(prevPt,1);...
+            pointArray(i,2) - patchStruct.pointsY(prevPt,1); 0])
+        if((0 <= dotProd) | (0 > dotProd & 0 < crossProd(3)))
             if(1 == nextPt)
                 if flag_do_debug
                     fprintf('New point goes after point %d\n',closePt);
@@ -166,6 +177,7 @@ for i = 1:NumPoints
                 patchStruct.pointsY = [patchStruct.pointsY(1:closePt); pointArray(i,2); patchStruct.pointsY(closePt+1:end)];
             end
         else
+            
             if(1 == closePt)
                 if flag_do_debug
                     fprintf('New point goes before point %d\n',closePt);
