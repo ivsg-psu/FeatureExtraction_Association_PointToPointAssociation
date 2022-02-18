@@ -231,9 +231,14 @@ for patchInd = 1:Npatches
         % along the side???
         
     end
+    % Check for a case where no intersections were calculated
+    if all([isnan(thetaVertex); isnan(thetaIFEdge); isnan(thetaOFEdge); isnan(thetaOREdge)])
+        angle(patchInd) = NaN;
+        time(patchInd) = Inf;
+        location(patchInd,:) = [NaN NaN];
     % Now, find the minimum angular location for the patch object in the
     % vehicle travel direction (indicated by the sign of R)
-    if R >= 0
+    elseif R >= 0
         [minVertex,minVertexInd] = nanmin(thetaVertex);
         [minIFEdge,minIFEdgeInd] = nanmin(thetaIFEdge);
         [minOFEdge,minOFEdgeInd] = nanmin(thetaOFEdge);
@@ -267,29 +272,54 @@ for patchInd = 1:Npatches
         % location
         time = angle(patchInd)*Rabs/v0;
     else
-        [maxVertex,maxVertexInd] = nanmax(thetaVertex);
-        [maxIFEdge,maxIFEdgeInd] = nanmax(thetaIFEdge);
-        [maxOFEdge,maxOFEdgeInd] = nanmax(thetaOFEdge);
-        [maxOREdge,maxOREdgeInd] = nanmax(thetaOREdge);
-        if maxVertex < maxIFEdge && maxVertex < maxOFEdge && maxVertex < maxOREdge
-            angle(patchInd) = thetaVertex(maxVertexInd);
-            location(patchInd,:) = [xobst(maxVertexInd) yobst(maxVertexInd)];
-        elseif maxIFEdge < maxVertex && maxIFEdge < maxOFEdge && maxIFEdge < maxOREdge
-            angle(patchInd) = thetaIFEdge(maxIFEdgeInd);
-            location(patchInd,:) = [xyIFEdge(maxIFEdgeInd,1) xyIFEdge(maxIFEdgeInd,2)];
-        elseif maxOFEdge < maxVertex && maxOFEdge < maxIFEdge && maxOFEdge < maxOREdge
-            angle(patchInd) = thetaOFEdge(maxOFEdgeInd);
-            location(patchInd,:) = [xyOFEdge(maxOFEdgeInd,1) xyOFEdge(maxOFEdgeInd,2)];
+        % Shift the angles into the negative range for comparison with the
+        % max function (this isn't correct)
+        [minVertex,minVertexInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaVertex));
+        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaIFEdge));
+        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaOFEdge));
+        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaOREdge));
+        if isnan(minVertex)
+            minVertex = inf;
+        end
+        if isnan(minIFEdge)
+            minIFEdge = inf;
+        end
+        if isnan(minOFEdge)
+            minOFEdge = inf;
+        end
+        if isnan(minOREdge)
+            minOREdge = inf;
+        end
+        if minVertex < minIFEdge && minVertex < minOFEdge && minVertex < minOREdge
+            angle(patchInd) = thetaVertex(minVertexInd);
+            location(patchInd,:) = [xobst(minVertexInd) yobst(minVertexInd)];
+        elseif minIFEdge < minVertex && minIFEdge < minOFEdge && minIFEdge < minOREdge
+            angle(patchInd) = thetaIFEdge(minIFEdgeInd);
+            location(patchInd,:) = [xyIFEdge(minIFEdgeInd,1) xyIFEdge(minIFEdgeInd,2)];
+        elseif minOFEdge < minVertex && minOFEdge < minIFEdge && minOFEdge < minOREdge
+            angle(patchInd) = thetaOFEdge(minOFEdgeInd);
+            location(patchInd,:) = [xyOFEdge(minOFEdgeInd,1) xyOFEdge(minOFEdgeInd,2)];
         else
-            angle(patchInd) = thetaOREdge(maxOREdgeInd);
-            location(patchInd,:) = [xyOREdge(maxOREdgeInd,1) xyOREdge(maxOREdgeInd,2)];
+            angle(patchInd) = thetaOREdge(minOREdgeInd);
+            location(patchInd,:) = [xyOREdge(minOREdgeInd,1) xyOREdge(minOREdgeInd,2)];
         end
         % With the location set, determine the time required to reach the
         % location
-        time = (2*pi - angle(patchInd))*Rabs/v0;
+        time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
     end
 end
 
+end
+
+% Function to re-range angles between 0 and 2*pi
+function outAngles = rerangeAngles(inAngles)
+    outAngles = inAngles;
+    while any(outAngles > 2*pi)
+        outAngles(outAngles > 2*pi) = outAngles(outAngles > 2*pi) - 2*pi;
+    end
+    while any(outAngles < 0)
+        outAngles(outAngles < 0) = outAngles(outAngles < 0) + 2*pi;
+    end
 end
 
 % Function to intersect an edge defined as the segment between two points
@@ -337,12 +367,7 @@ else
     intAngle = atan2(pa(2) + alpha*(pb(2)-pa(2)) - pc(2),...
         pa(1) + alpha*(pb(1)-pa(1)) - pc(1));
     % Normalize the range of the intersection angle to [0,2*pi]
-    while intAngle > 2*pi
-        intAngle = intAngle - 2*pi;
-    end
-    while intAngle < 0
-        intAngle = intAngle + 2*pi;
-    end
+    intAngle = rerangeAngles(intAngle);
     % Compute the actual point of intersection
     intPoint(1) = pa(1) + alpha*(pb(1)-pa(1));
     intPoint(2) = pa(2) + alpha*(pb(2)-pa(2));

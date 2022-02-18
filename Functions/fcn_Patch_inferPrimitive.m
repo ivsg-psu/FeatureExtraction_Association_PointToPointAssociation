@@ -1,7 +1,7 @@
 function [patchArray, varargout] = fcn_Patch_inferPrimitive(patchArray,varargin)
 % fcn_Patch_inferPrimitive
 % Infer the most appropriate 2D primitive shape (rectangle, circle, or
-% irregular). This may be extended into 3d in the future with truncated 
+% irregular). This may be extended into 3d in the future with truncated
 % rectangular pyramids and truncated cones as the primitives.
 %
 % FORMAT:
@@ -28,7 +28,7 @@ function [patchArray, varargout] = fcn_Patch_inferPrimitive(patchArray,varargin)
 %      updated
 %
 %      (OPTIONAL OUTPUTS)
-%      hpr: a vector of handles to the plotted primitives in order of the 
+%      hpr: a vector of handles to the plotted primitives in order of the
 %           indices (if provided)
 %
 % DEPENDENCIES:
@@ -94,7 +94,7 @@ end
 % Did the user provide a specific index vector?
 if 3 == nargin
     idxVec = varargin{2};
-else    
+else
     idxVec = (1:length(patchArray))';
 end
 
@@ -109,32 +109,56 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Determine the axis-aligned bounding box (aabb) for each patch structure
 NumPatches = length(idxVec);
 % Loop through all of the patches
 for i_patch = 1:NumPatches
-    % Create an anonymous function to optimize for the circle center and
-    % radius. This function is specific to each set of points for a patch
-    centerFun = @(x) sum((x(3)^2 - ((patchArray(idxVec(i_patch)).pointsX-x(1)).^2 + (patchArray(idxVec(i_patch)).pointsY-x(2)).^2)).^2);
-    % Make sure the axis-aligned bounding box is populated
-    if isempty(patchArray(idxVec(i_patch)).aabb)
-        % Update the axis-aligned bounding box (aabb)
-        patchArray(idxVec(i_patch)) = fcn_Patch_determineAABB(patchArray(idxVec(i_patch)));
+    % Find the centroid of the data
+    centroid = [median(x) median(y)];
+    % Create a shifted and rotated data set with the centroid at the origin and
+    % the primary axis along the x direction (0 degrees)
+    centeredXY = [x - centroid(1) y - centroid(2)];
+    % Calculate the SVD of the data
+    [U,S,V] = svd(centeredXY,'econ');
+    % Calculate the aspect ratio of the data
+    AR = S(1,1)/S(2,2);
+    
+    % Check the aspect ratio to determine whether fitting a circle is
+    % practical
+    if 3 > AR
+        % Create an anonymous function to optimize for the circle center and
+        % radius. This function is specific to each set of points for a patch
+        centerFun = @(x) sum((x(3)^2 - ((patchArray(idxVec(i_patch)).pointsX-x(1)).^2 + (patchArray(idxVec(i_patch)).pointsY-x(2)).^2)).^2);
+        % Make sure the axis-aligned bounding box is populated
+        if isempty(patchArray(idxVec(i_patch)).aabb)
+            % Update the axis-aligned bounding box (aabb)
+            patchArray(idxVec(i_patch)) = fcn_Patch_determineAABB(patchArray(idxVec(i_patch)));
+        end
+        % Set the initial guess for the center of the circle to the center of the bounding box
+        x0 = [mean(patchArray(idxVec(i_patch)).aabb([1 3])); mean(patchArray(idxVec(i_patch)).aabb([2 4]))];
+        % Set the initial guess for the radius of the circle to average of the
+        % width and height of the bounding box
+        x0(3) = mean([patchArray(idxVec(i_patch)).aabb(3)-patchArray(idxVec(i_patch)).aabb(1); patchArray(idxVec(i_patch)).aabb(4)-patchArray(idxVec(i_patch)).aabb(2)]);
+        % Find the optimal center of the circle
+        [soln,~] = fminsearch(centerFun,x0);
+        % Compute the optimal radius for the circle
+        patchArray(idxVec(i_patch)).primparams(1:2) = [soln(1) soln(2)];
+        patchArray(idxVec(i_patch)).primparams(3) = soln(3);
     end
-    % Set the initial guess for the center of the circle to the center of the bounding box
-    x0 = [mean(patchArray(idxVec(i_patch)).aabb([1 3])); mean(patchArray(idxVec(i_patch)).aabb([2 4]))];
-    % Set the initial guess for the radius of the circle to average of the
-    % width and height of the bounding box
-    x0(3) = mean([patchArray(idxVec(i_patch)).aabb(3)-patchArray(idxVec(i_patch)).aabb(1); patchArray(idxVec(i_patch)).aabb(4)-patchArray(idxVec(i_patch)).aabb(2)]);
-    % Find the optimal center of the circle
-    [soln,~] = fminsearch(centerFun,x0);
-    % Compute the optimal radius for the circle
-    patchArray(idxVec(i_patch)).primparams(1:2) = [soln(1) soln(2)];
-    patchArray(idxVec(i_patch)).primparams(3) = soln(3);
+    % Try fitting a rectangle
+        % Compute the rotation angle associated with the primary axis
+        primAngle = atan2(V(2,1),V(1,1));
+        % Rotate the data to make the principal axis lie along the x axis
+        rotMat = [cos(-primAngle) sin(-primAngle); -sin(-primAngle) cos(-primAngle)];
+        rotatedXY = zeros(N,2);
+        for i = 1:N
+            rotatedXY(i,:) = centeredXY(i,:)*rotMat;
+        end
+        % 
+        
 end
 
 % Find the best rectangle fit to each patch
-% Assumption: 
+% Assumption:
 % - Points are sorted such that they are adjacent to each other in a
 %   counter-clockwise convention
 % Algorithm:

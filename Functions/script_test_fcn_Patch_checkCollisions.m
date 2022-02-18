@@ -6,15 +6,17 @@
 % vehicle as it goes around.
 
 
-% Remaining issues: clockwise travel
+% Remaining issues: misses edges that cross the outside of the trajectory
+% but have no vertices inside (see screen shot), doesn't gracefully handle
+% misses, doesn't properly handle misses in terms of return variables
 
-%clearvars
+clearvars
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
-R = 15;         % path radius (m) with sign (+ left, - right)
+R = -15;         % path radius (m) with sign (+ left, - right)
 p0 = [0,0];     % initial position of vehicle (m,m)
-h0 = 0;      % initial heading of vehicle (rad)
+h0 = -pi/4;      % initial heading of vehicle (rad)
 tf = 3;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; vx; R];
@@ -48,18 +50,17 @@ plot(pv(:,1),pv(:,2),'k-.')
 
 % Determine the bounding radii for all portions of the vehicle
 Rmin = R - vehicle.d/2*sign(R);
-Rmax = sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
-theta_max_offset = atan2(-vehicle.b,R+vehicle.d/2*sign(R));
-pmin = zeros(N,2);
-pmax = zeros(N,2);
-pmin(:,1) = Rmin*cos(theta+h0-pi/2) + pc(1);
-pmin(:,2) = Rmin*sin(theta+h0-pi/2) + pc(2);
-pmax(:,1) = Rmax*cos(theta+h0-pi/2+theta_max_offset) + pc(1);
-pmax(:,2) = Rmax*sin(theta+h0-pi/2+theta_max_offset) + pc(2);
-plot(pmin(:,1),pmin(:,2),'r-');
-plot(pmax(:,1),pmax(:,2),'b-');
+Rmax = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
+Rinner = R - vehicle.d/2*sign(R);
+Router = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + vehicle.a^2);
+travel_offset = h0 - pi/2;
+theta_max_offset = sign(R)*atan2(-vehicle.b,sign(R)*R+vehicle.d/2);
+plot(Rinner*cos(theta+travel_offset) + pc(1),Rinner*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
+plot(Rmin*cos(theta+travel_offset) + pc(1),Rmin*sin(theta+travel_offset) + pc(2),'r-');
+plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
+plot(Router*cos(theta+travel_offset) + pc(1),Router*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
 
-% Now determine where the front corners of the vehicle are at each moment
+%% Now determine where the front corners of the vehicle are at each moment
 plf = zeros(N,2);
 prf = zeros(N,2);
 plf(:,1) = pv(:,1) + vehicle.a*cos(theta+h0) + vehicle.d/2*cos(theta+h0+pi/2);
@@ -85,8 +86,7 @@ end
 
 % Add an obstacle by clicking to generate the points and then turning the
 % points into a patch object
-%axis([9 12 25 27])
-%[xobst,yobst] = ginput;
+[xobst,yobst] = ginput;
 obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
 obstacles(1).pointsX = xobst;
 obstacles(1).pointsY = yobst;
@@ -94,23 +94,39 @@ obstacles(1).color = [0.4 0.4 0.4];
 % Plot the patch object over the trajectory lines using the patch plotting
 % utility
 [h,hpts] = fcn_Patch_plotPatch(obstacles,1);
+axis auto
 
 %% Determine the nearest collision
 [collTime,collAngle,collLoc,~] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
 
-% Plot the car body
-bodyLoc(1,1) = R*cos(collAngle) + pc(1) + vehicle.a*cos(collAngle+pi/2) - vehicle.d/2*cos(collAngle);
-bodyLoc(1,2) = R*sin(collAngle) + pc(2) + vehicle.a*sin(collAngle+pi/2) - vehicle.d/2*sin(collAngle);
-bodyLoc(2,1) = R*cos(collAngle) + pc(1) + vehicle.a*cos(collAngle+pi/2) + vehicle.d/2*cos(collAngle);
-bodyLoc(2,2) = R*sin(collAngle) + pc(2) + vehicle.a*sin(collAngle+pi/2) + vehicle.d/2*sin(collAngle);
-bodyLoc(3,1) = R*cos(collAngle) + pc(1) - vehicle.b*cos(collAngle+pi/2) + vehicle.d/2*cos(collAngle);
-bodyLoc(3,2) = R*sin(collAngle) + pc(2) - vehicle.b*sin(collAngle+pi/2) + vehicle.d/2*sin(collAngle);
-bodyLoc(4,1) = R*cos(collAngle) + pc(1) - vehicle.b*cos(collAngle+pi/2) - vehicle.d/2*cos(collAngle);
-bodyLoc(4,2) = R*sin(collAngle) + pc(2) - vehicle.b*sin(collAngle+pi/2) - vehicle.d/2*sin(collAngle);
+if collTime < Inf
+    fprintf('Found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collTime,collLoc(1),collLoc(2));
+    % Plot the car body
+Rabs = abs(R);
+forwardAngleOffset = sign(R)*pi/2;
+bodyLoc(1,1) = Rabs*cos(collAngle) + pc(1) + vehicle.a*cos(collAngle+forwardAngleOffset) - vehicle.d/2*cos(collAngle);
+bodyLoc(1,2) = Rabs*sin(collAngle) + pc(2) + vehicle.a*sin(collAngle+forwardAngleOffset) - vehicle.d/2*sin(collAngle);
+bodyLoc(2,1) = Rabs*cos(collAngle) + pc(1) + vehicle.a*cos(collAngle+forwardAngleOffset) + vehicle.d/2*cos(collAngle);
+bodyLoc(2,2) = Rabs*sin(collAngle) + pc(2) + vehicle.a*sin(collAngle+forwardAngleOffset) + vehicle.d/2*sin(collAngle);
+bodyLoc(3,1) = Rabs*cos(collAngle) + pc(1) - vehicle.b*cos(collAngle+forwardAngleOffset) + vehicle.d/2*cos(collAngle);
+bodyLoc(3,2) = Rabs*sin(collAngle) + pc(2) - vehicle.b*sin(collAngle+forwardAngleOffset) + vehicle.d/2*sin(collAngle);
+bodyLoc(4,1) = Rabs*cos(collAngle) + pc(1) - vehicle.b*cos(collAngle+forwardAngleOffset) - vehicle.d/2*cos(collAngle);
+bodyLoc(4,2) = Rabs*sin(collAngle) + pc(2) - vehicle.b*sin(collAngle+forwardAngleOffset) - vehicle.d/2*sin(collAngle);
 plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
 
 % Plot the collision point
 plot(collLoc(1),collLoc(2),'r*')
 
+% Create another copy of the figure
+figure(1)
+a1 = gca;
+f2 = figure(2);
+clf
+a2 = copyobj(a1,f2);
+figure(2)
+axis([collLoc(1)-2 collLoc(1)+2 collLoc(2)-2 collLoc(2) + 2]);
 % Create a legend
-legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
+%legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
+else
+    fprintf('No collision detected\n');
+end
