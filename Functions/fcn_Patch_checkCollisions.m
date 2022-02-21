@@ -1,4 +1,4 @@
-function [time,angle,location,clearance] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
+function [collFlag,time,angle,location,clearance] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
 % fcn_Patch_checkCollisions
 % Evaluates a circular vehicle trajectory against a series of patches to
 % determine whether there will be collisions between the vehicle and the
@@ -29,10 +29,12 @@ function [time,angle,location,clearance] = fcn_Patch_checkCollisions(x0,vehicle,
 %
 % OUTPUTS:
 %
+%      collFlag: an N x 1 vector of flags denoting whether there is a
+%           collision with each of the objects
 %      time: an N x 1 vector of collision times, where N is the number of
 %           patch objects. Elements of the time vector will be set to Inf
 %           if there is no overlap with the vehicle path.
-%      angle: a N x 1 
+%      angle: a N x 1
 %      location: a N x 2 vector of collision locations, where N is the
 %           number of patch objects and the columns are the x and y
 %           coordinates of the collision. Elements of the location matrix
@@ -173,6 +175,11 @@ for patchInd = 1:Npatches
     % Subset the patch points to evaluate just the points on the hull
     xobst = patchArray(patchInd).pointsX;
     yobst = patchArray(patchInd).pointsY;
+    % CEB: Determine which of the indices and edges are relevant for this
+    % check? If both indices are outside of the annulus *and* the edge does
+    % not cross through, it is not relevant here. (Is this correct?)
+    % Vertices are relevant if
+    % the vertex in the annulus or the next edge crosses through.
     
     % Determine the distance from the center of the vehicle trajectory for
     % all convex hull points of each of the obstacles
@@ -220,25 +227,95 @@ for patchInd = 1:Npatches
         % Check for intersections with the front of the vehicle
         pa = [xobst(vertexInd) yobst(vertexInd)];
         pb = [xobst(nextVertex) yobst(nextVertex)];
+        
+        % Compute the alpha associated with the min radius
+        alpha = -((pa(1)-pc(1))*(pb(1)-pa(1)) + (pa(2)-pc(2))*(pb(2)-pa(2)))/((pb(1)-pa(1))^2 + (pb(2)-pa(2))^2);
+        % Bound alpha between 0 and 1;
+        % alpha = max(0,min(alpha,1));
+        
+        % Check to see if there is a segment that spans the outer radius
+        if(vertexRadii(vertexInd) > RmaxAbs && vertexRadii(nextVertex) > RmaxAbs && alpha > 0 && alpha < 1)
+            % Handle this case, somehow. Best guess is to somehow divide
+            % the segment into two and use the existing code. However, this
+            % requires either dividing the segment before this inside loop
+            % or shifting the vertices and getting the 'for' loop to expand
+            % the number of iterations accordingly
+            pd(1) = pa(1) + alpha*(pb(1)-pa(1));
+            pd(2) = pa(2) + alpha*(pb(2)-pa(2));
+            RsegmentMin = sqrt((pd(1)-pc(1))^2 + (pd(2)-pc(2))^2);
+            % If the resulting minimum radius is less than the outer radius
+            % of the vehicle path, the edge spans (since the end points are
+            % outside based on the outer conditional)
+            if RsegmentMin < RmaxAbs
+                % Split the edge into two parts and test both of them for
+                % intersections with the outer circle
+                [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RoutsideAbs);
+                [thetaOFTest,xyOFTest] = intersectEdgeWithCircle(pb,pd,pc,RoutsideAbs);
+                if thetaOFTest < thetaOFEdge(vertexInd)
+                    thetaOFEdge(vertexInd) = thetaOFTest;
+                    xyOFEdge(vertexInd,:) = xyOFTest;
+                end
+                thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
+                % Split the edge into two parts and test both of them for
+                % intersections with the outer circle
+                [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RmaxAbs);
+                [thetaORTest,xyORTest] = intersectEdgeWithCircle(pb,pd,pc,RmaxAbs);
+                if thetaORTest < thetaOREdge(vertexInd)
+                    thetaOREdge(vertexInd) = thetaORTest;
+                    xyOREdge(vertexInd,:) = xyORTest;
+                end
+                thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
+            end
+        else
+            [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RoutsideAbs);
+            thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
+            [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RmaxAbs);
+            thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
+        end
         [thetaIFEdge(vertexInd),xyIFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RinsideAbs);
         thetaIFEdge(vertexInd) = thetaIFEdge(vertexInd) - sign(R)*asin(vehicle.a/RinsideAbs);
-        [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RoutsideAbs);
-        thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
-        [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RmaxAbs);
-        thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
-        
-        % CEB: Check the case where it misses the front of the car but hits
-        % along the side???
         
     end
     % Check for a case where no intersections were calculated
     if all([isnan(thetaVertex); isnan(thetaIFEdge); isnan(thetaOFEdge); isnan(thetaOREdge)])
-        angle(patchInd) = NaN;
-        time(patchInd) = Inf;
-        location(patchInd,:) = [NaN NaN];
-    % Now, find the minimum angular location for the patch object in the
-    % vehicle travel direction (indicated by the sign of R)
+        collFlag(patchInd) = 0;
+        
+        % Determine the nearest two vertices
+        [nearestOuterClearance,nearestOuters] = mink(min(inf(Nobst,1),vertexRadii - RmaxAbs),2);
+        [nearestInnerClearance,nearestInners] = mink(min(inf(Nobst,1),RminAbs - vertexRadii),2);
+        if max(0,nearestOuterClearance) > max(nearestInnerClearance)
+            pa = [xobst(nearestOuters(1)) yobst(nearestOuters(1))];
+            pb = [xobst(nearestOuters(2)) yobst(nearestOuters(2))];
+            theta_offset = sign(R)*asin(vehicle.b/Rabs);
+            % Check to see if the minimum clearance is along the edge between
+            % the nearest two vertices
+            if alpha > 0 && alpha < 1
+                % If so, calculate the clearance distance from the computed
+                % point to the
+                clearance(patchInd) = norm(pa + alpha*(pb-pa) - pc) - R;
+                location(patchInd,:) = pa + alpha*(pb-pa);
+            else
+                clearance(patchInd) = norm([pa - pc]) - R;
+                location(patchInd,:) = pa;
+            end
+        else
+            pa = [xobst(nearestInners(1)) yobst(nearestInners(1))];
+            theta_offset = 0;
+            clearance(patchInd) = abs(norm([pa - pc]) - R);
+            location(patchInd,:) = pa;
+        end
+        angle(patchInd) = atan2(location(patchInd,2)-pc(2),location(patchInd,1)-pc(1)) + theta_offset;
+        if R >= 0
+            time = rerangeAngles(angle(patchInd) - h0 - pi/2)*Rabs/v0;
+        else
+            time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
+        end
+        
+        
+        % Now, find the minimum angular location for the patch object in the
+        % vehicle travel direction (indicated by the sign of R)
     elseif R >= 0
+        collFlag(patchInd) = 1;
         [minVertex,minVertexInd] = nanmin(thetaVertex);
         [minIFEdge,minIFEdgeInd] = nanmin(thetaIFEdge);
         [minOFEdge,minOFEdgeInd] = nanmin(thetaOFEdge);
@@ -270,8 +347,9 @@ for patchInd = 1:Npatches
         end
         % With the location set, determine the time required to reach the
         % location
-        time = angle(patchInd)*Rabs/v0;
+        time = rerangeAngles(angle(patchInd) - h0 - pi/2)*Rabs/v0
     else
+        collFlag(patchInd) = 1;
         % Shift the angles into the negative range for comparison with the
         % max function (this isn't correct)
         [minVertex,minVertexInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaVertex));
@@ -306,6 +384,7 @@ for patchInd = 1:Npatches
         % With the location set, determine the time required to reach the
         % location
         time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
+        clearance = NaN;
     end
 end
 
@@ -313,13 +392,13 @@ end
 
 % Function to re-range angles between 0 and 2*pi
 function outAngles = rerangeAngles(inAngles)
-    outAngles = inAngles;
-    while any(outAngles > 2*pi)
-        outAngles(outAngles > 2*pi) = outAngles(outAngles > 2*pi) - 2*pi;
-    end
-    while any(outAngles < 0)
-        outAngles(outAngles < 0) = outAngles(outAngles < 0) + 2*pi;
-    end
+outAngles = inAngles;
+while any(outAngles > 2*pi)
+    outAngles(outAngles > 2*pi) = outAngles(outAngles > 2*pi) - 2*pi;
+end
+while any(outAngles < 0)
+    outAngles(outAngles < 0) = outAngles(outAngles < 0) + 2*pi;
+end
 end
 
 % Function to intersect an edge defined as the segment between two points
@@ -352,10 +431,17 @@ else
     % the first term in the quadratic formula is greater than 1. If so,
     % we need to use the root with the negative sign. Otherwise, we use
     % the root with the positive sign.
-    if -quadCoefs(2)/(2*quadCoefs(1)) > 1
+    %     if -quadCoefs(2)/(2*quadCoefs(1)) < 0
+    %         alpha = (-quadCoefs(2) - sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
+    %     else
+    %         alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
+    %     end
+    % Calculate the additive root for alpha
+    alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
+    % Check to see if the solution should come from the subtractive root
+    % and adjust if necessary
+    if alpha > 1
         alpha = (-quadCoefs(2) - sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
-    else
-        alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
     end
     % Confirm that we got a good solution. (This shouldn't fail with
     % the previous logic, but it's here as extra validation.)

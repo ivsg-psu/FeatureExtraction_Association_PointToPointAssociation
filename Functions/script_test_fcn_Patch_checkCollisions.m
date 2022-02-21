@@ -7,14 +7,18 @@
 
 
 % Remaining issues: misses edges that cross the outside of the trajectory
-% but have no vertices inside (see screen shot), doesn't gracefully handle
-% misses, doesn't properly handle misses in terms of return variables
+% but have no vertices inside (see screen shot) because the line-circle
+% intersection function rejects edges with two intersections. The routine
+% also does not (yet) find the minimum clearance for misses
+
+% Update: seems to incorrectly get the closest point on an edge for a
+% near miss
 
 clearvars
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
-R = -15;         % path radius (m) with sign (+ left, - right)
+R = 15;         % path radius (m) with sign (+ left, - right)
 p0 = [0,0];     % initial position of vehicle (m,m)
 h0 = -pi/4;      % initial heading of vehicle (rad)
 tf = 3;         % time horizon to check (s)
@@ -60,9 +64,11 @@ plot(Rmin*cos(theta+travel_offset) + pc(1),Rmin*sin(theta+travel_offset) + pc(2)
 plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
 plot(Router*cos(theta+travel_offset) + pc(1),Router*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
 
-%% Now determine where the front corners of the vehicle are at each moment
+% Now determine where the front corners of the vehicle are at each moment
 plf = zeros(N,2);
 prf = zeros(N,2);
+plr = zeros(N,2);
+prr = zeros(N,2);
 plf(:,1) = pv(:,1) + vehicle.a*cos(theta+h0) + vehicle.d/2*cos(theta+h0+pi/2);
 plf(:,2) = pv(:,2) + vehicle.a*sin(theta+h0) + vehicle.d/2*sin(theta+h0+pi/2);
 prf(:,1) = pv(:,1) + vehicle.a*cos(theta+h0) + vehicle.d/2*cos(theta+h0-pi/2);
@@ -77,7 +83,7 @@ prr(:,2) = pv(:,2) - vehicle.b*sin(theta+h0) + vehicle.d/2*sin(theta+h0-pi/2);
 % plot(plr(:,1),plr(:,2),'r-.')
 % plot(prr(:,1),prr(:,2),'b-.')
 % Plot a few of the rear corners
-inds = 1%;[1; floor(N/4); floor(N/2); floor(3*N/4)];
+inds = 1;%;[1; floor(N/4); floor(N/2); floor(3*N/4)];
 for i = 1:length(inds)
     plot(pv(inds(i),1),pv(inds(i),2),'ko')
     plot([plf(inds(i),1) prf(inds(i),1) prr(inds(i),1) plr(inds(i),1) plf(inds(i),1)],...
@@ -97,11 +103,9 @@ obstacles(1).color = [0.4 0.4 0.4];
 axis auto
 
 %% Determine the nearest collision
-[collTime,collAngle,collLoc,~] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
+[collFlags,collTime,collAngle,collLoc,clearance] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
 
-if collTime < Inf
-    fprintf('Found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collTime,collLoc(1),collLoc(2));
-    % Plot the car body
+% Plot the car body
 Rabs = abs(R);
 forwardAngleOffset = sign(R)*pi/2;
 bodyLoc(1,1) = Rabs*cos(collAngle) + pc(1) + vehicle.a*cos(collAngle+forwardAngleOffset) - vehicle.d/2*cos(collAngle);
@@ -114,7 +118,7 @@ bodyLoc(4,1) = Rabs*cos(collAngle) + pc(1) - vehicle.b*cos(collAngle+forwardAngl
 bodyLoc(4,2) = Rabs*sin(collAngle) + pc(2) - vehicle.b*sin(collAngle+forwardAngleOffset) - vehicle.d/2*sin(collAngle);
 plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
 
-% Plot the collision point
+% Plot the collision or closest clearance point
 plot(collLoc(1),collLoc(2),'r*')
 
 % Create another copy of the figure
@@ -127,6 +131,9 @@ figure(2)
 axis([collLoc(1)-2 collLoc(1)+2 collLoc(2)-2 collLoc(2) + 2]);
 % Create a legend
 %legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
+
+if 1 == collFlags(1)
+    fprintf('Found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collTime,collLoc(1),collLoc(2));
 else
-    fprintf('No collision detected\n');
+    fprintf('No collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',clearance,collLoc(1),collLoc(2),collTime);
 end
