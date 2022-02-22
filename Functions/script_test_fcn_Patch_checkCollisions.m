@@ -55,7 +55,7 @@ plot(pv(:,1),pv(:,2),'k-.')
 % Determine the bounding radii for all portions of the vehicle
 Rmin = R - vehicle.d/2*sign(R);
 Rmax = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
-Rinner = R - vehicle.d/2*sign(R);
+Rinner = sign(R)*sqrt((R-vehicle.d/2*sign(R))^2 + vehicle.a^2);
 Router = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + vehicle.a^2);
 travel_offset = h0 - pi/2;
 theta_max_offset = sign(R)*atan2(-vehicle.b,sign(R)*R+vehicle.d/2);
@@ -83,7 +83,7 @@ prr(:,2) = pv(:,2) - vehicle.b*sin(theta+h0) + vehicle.d/2*sin(theta+h0-pi/2);
 % plot(plr(:,1),plr(:,2),'r-.')
 % plot(prr(:,1),prr(:,2),'b-.')
 % Plot a few of the rear corners
-inds = 1;%;[1; floor(N/4); floor(N/2); floor(3*N/4)];
+inds = 1;%;[1; floor(N/4); floor(N/2); floor(3*N/4)];%
 for i = 1:length(inds)
     plot(pv(inds(i),1),pv(inds(i),2),'ko')
     plot([plf(inds(i),1) prf(inds(i),1) prr(inds(i),1) plr(inds(i),1) plf(inds(i),1)],...

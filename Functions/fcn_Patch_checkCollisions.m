@@ -287,6 +287,8 @@ for patchInd = 1:Npatches
             pa = [xobst(nearestOuters(1)) yobst(nearestOuters(1))];
             pb = [xobst(nearestOuters(2)) yobst(nearestOuters(2))];
             theta_offset = sign(R)*asin(vehicle.b/Rabs);
+            % Compute the alpha associated with the min radius
+            alpha = -((pa(1)-pc(1))*(pb(1)-pa(1)) + (pa(2)-pc(2))*(pb(2)-pa(2)))/((pb(1)-pa(1))^2 + (pb(2)-pa(2))^2);
             % Check to see if the minimum clearance is along the edge between
             % the nearest two vertices
             if alpha > 0 && alpha < 1
