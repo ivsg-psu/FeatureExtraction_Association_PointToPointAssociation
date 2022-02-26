@@ -200,6 +200,7 @@ for patchInd = 1:Npatches
         if vertexRadii(vertexInd) <= RoutsideAbs && vertexRadii(vertexInd) >= RinsideAbs
             % Calculate based on the front of the car
             thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*asin(vehicle.a/vertexRadii(vertexInd));
+            thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
         elseif vertexRadii(vertexInd) <= RmaxAbs && vertexRadii(vertexInd) >= RminAbs
             % Calculate based on the sides of the car
             if vertexRadii(vertexInd) <= RinsideAbs & vertexRadii(vertexInd) >= RminAbs
@@ -209,12 +210,14 @@ for patchInd = 1:Npatches
                 alphaa = sqrt(vertexRadii(vertexInd)^2 - (Rabs-vehicle.d/2)^2);
                 % Adjust the angle by the computed distance ahead of the CG.
                 thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*atan(alphaa/(Rabs-vehicle.d/2));
+                thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
             else
                 % Calculate based on the outside of the car. If the object
                 % cleared the front, it will only hit behind the CG.
                 alphab = sqrt(vertexRadii(vertexInd)^2 - (Rabs+vehicle.d/2)^2);
                 % Adjust the angle by the computed distance behind the CG.
                 thetaVertex(vertexInd) = vertexAngles(vertexInd) + sign(R)*atan(alphab/(Rabs+vehicle.d/2));
+                thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
             end
         end
         % Determine the index of the next vertex to define edges
@@ -308,7 +311,7 @@ for patchInd = 1:Npatches
         end
         angle(patchInd) = atan2(location(patchInd,2)-pc(2),location(patchInd,1)-pc(1)) + theta_offset;
         if R >= 0
-            time = rerangeAngles(angle(patchInd) - h0 - pi/2)*Rabs/v0;
+            time = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
         else
             time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
         end
@@ -349,7 +352,7 @@ for patchInd = 1:Npatches
         end
         % With the location set, determine the time required to reach the
         % location
-        time = rerangeAngles(angle(patchInd) - h0 - pi/2)*Rabs/v0
+        time = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0
     else
         collFlag(patchInd) = 1;
         % Shift the angles into the negative range for comparison with the

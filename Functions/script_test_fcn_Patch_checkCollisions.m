@@ -5,28 +5,19 @@
 % would have to use either max sideslip angle or change the bounds of the
 % vehicle as it goes around.
 
-
-% Remaining issues: misses edges that cross the outside of the trajectory
-% but have no vertices inside (see screen shot) because the line-circle
-% intersection function rejects edges with two intersections. The routine
-% also does not (yet) find the minimum clearance for misses
-
-% Update: seems to incorrectly get the closest point on an edge for a
-% near miss
-
-clearvars
+%clearvars
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
-R = 15;         % path radius (m) with sign (+ left, - right)
+R = 10;         % path radius (m) with sign (+ left, - right)
 p0 = [0,0];     % initial position of vehicle (m,m)
-h0 = -pi/4;      % initial heading of vehicle (rad)
-tf = 3;         % time horizon to check (s)
+h0 = -pi/2;      % initial heading of vehicle (rad)
+tf = 2.36;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; vx; R];
 % Vehicle dimensional information
-vehicle.a = 1.75;       % CG-front axle distance (m)
-vehicle.b = 2.5;        % CG-rear axle distance (m)
+vehicle.a = 2.0;       % CG-front axle distance (m)
+vehicle.b = 2.2;        % CG-rear axle distance (m)
 vehicle.d = 2.0;        % vehicle width (m)
 
 % Plot the points
@@ -54,15 +45,16 @@ plot(pv(:,1),pv(:,2),'k-.')
 
 % Determine the bounding radii for all portions of the vehicle
 Rmin = R - vehicle.d/2*sign(R);
-Rmax = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
 Rinner = sign(R)*sqrt((R-vehicle.d/2*sign(R))^2 + vehicle.a^2);
 Router = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + vehicle.a^2);
+Rmax = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
 travel_offset = h0 - pi/2;
 theta_max_offset = sign(R)*atan2(-vehicle.b,sign(R)*R+vehicle.d/2);
 plot(Rinner*cos(theta+travel_offset) + pc(1),Rinner*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
 plot(Rmin*cos(theta+travel_offset) + pc(1),Rmin*sin(theta+travel_offset) + pc(2),'r-');
-plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
+%plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
 plot(Router*cos(theta+travel_offset) + pc(1),Router*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
+plot(Rmax*cos(theta+travel_offset) + pc(1),Rmax*sin(theta+travel_offset) + pc(2),'b-');
 
 % Now determine where the front corners of the vehicle are at each moment
 plf = zeros(N,2);
@@ -92,7 +84,8 @@ end
 
 % Add an obstacle by clicking to generate the points and then turning the
 % points into a patch object
-[xobst,yobst] = ginput;
+% pause
+% [xobst,yobst] = ginput;
 obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
 obstacles(1).pointsX = xobst;
 obstacles(1).pointsY = yobst;
