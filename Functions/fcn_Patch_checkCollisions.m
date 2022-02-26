@@ -311,9 +311,9 @@ for patchInd = 1:Npatches
         end
         angle(patchInd) = atan2(location(patchInd,2)-pc(2),location(patchInd,1)-pc(1)) + theta_offset;
         if R >= 0
-            time = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
+            time(patchInd) = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
         else
-            time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
+            time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
         end
         
         
@@ -352,7 +352,7 @@ for patchInd = 1:Npatches
         end
         % With the location set, determine the time required to reach the
         % location
-        time = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0
+        time(patchInd) = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
     else
         collFlag(patchInd) = 1;
         % Shift the angles into the negative range for comparison with the
@@ -388,8 +388,8 @@ for patchInd = 1:Npatches
         end
         % With the location set, determine the time required to reach the
         % location
-        time = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
-        clearance = NaN;
+        time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
+        clearance(patchInd) = NaN;
     end
 end
 
