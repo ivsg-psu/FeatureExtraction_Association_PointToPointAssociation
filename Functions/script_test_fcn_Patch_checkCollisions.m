@@ -5,7 +5,10 @@
 % would have to use either max sideslip angle or change the bounds of the
 % vehicle as it goes around.
 
-clearvars
+getNewData = 0;
+if 1 == getNewData
+    clearvars
+end
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
@@ -82,15 +85,17 @@ for i = 1:length(inds)
         [plf(inds(i),2) prf(inds(i),2) prr(inds(i),2) plr(inds(i),2) plf(inds(i),2)],'k');
 end
 
-% Add an obstacle by clicking to generate the points and then turning the
-% points into a patch object
-obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
-
-for obstacleInd = 1:4
-    [xobst,yobst] = ginput;
-    obstacles(obstacleInd).pointsX = xobst;
-    obstacles(obstacleInd).pointsY = yobst;
-    obstacles(obstacleInd).color = [0.4 0.4 0.4];
+if 1 == getNewData
+    % Add an obstacle by clicking to generate the points and then turning the
+    % points into a patch object
+    obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
+    
+    for obstacleInd = 1:4
+        [xobst,yobst] = ginput;
+        obstacles(obstacleInd).pointsX = xobst;
+        obstacles(obstacleInd).pointsY = yobst;
+        obstacles(obstacleInd).color = [0.4 0.4 0.4];
+    end
 end
 % Plot the patch object over the trajectory lines using the patch plotting
 % utility
@@ -98,7 +103,11 @@ end
 axis auto
 
 %% Determine the nearest collision
-[collFlags,collTime,collAngle,collLoc,clearance] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
+tic
+[collFlags,collTime,collAngle,collLoc,clearance,bodyCollLoc] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
+ET = toc;
+
+fprintf('Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
 
 % Plot the car body
 Rabs = abs(R);
@@ -119,11 +128,13 @@ for collInd = 1:length(collFlags)
     plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
     
     if 1 == collFlags(collInd)
-        fprintf('For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+        fprintf('  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
     else
-        fprintf('For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+        fprintf('  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
     end
 end
+
+[~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
 
 % Create another copy of the figure
 figure(1)
@@ -132,6 +143,6 @@ f2 = figure(2);
 clf
 a2 = copyobj(a1,f2);
 figure(2)
-axis([collLoc(1,1)-2 collLoc(1,1)+2 collLoc(1,2)-2 collLoc(1,2) + 2]);
+axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
 % Create a legend
 %legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')

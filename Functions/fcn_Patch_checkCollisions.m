@@ -1,4 +1,4 @@
-function [collFlag,time,angle,location,clearance] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
+function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
 % fcn_Patch_checkCollisions
 % Evaluates a circular vehicle trajectory against a series of patches to
 % determine whether there will be collisions between the vehicle and the
@@ -14,7 +14,7 @@ function [collFlag,time,angle,location,clearance] = fcn_Patch_checkCollisions(x0
 %
 % FORMAT:
 %
-%       [time,angle,location,clearance] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
+%       [time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
 %
 % INPUTS:
 %
@@ -44,6 +44,11 @@ function [collFlag,time,angle,location,clearance] = fcn_Patch_checkCollisions(x0
 %           the vehicle and the patch objects, where N is the number of
 %           patch objects. Elements of the clearance vector will be set to
 %           NaN if there is a collision with the object.
+%       bodyLoc: an N x 2 vector of collision locations in vehicle body
+%           fixed coordinates, where N is the number of patch objects and
+%           the columns are the x and y coordinates of the collision.
+%           Elements of the location matrix will be set to NaN if there is
+%           no overlap with the vehicle path
 %
 % DEPENDENCIES:
 %
@@ -165,7 +170,8 @@ time = -ones(Npatches,1);
 angle = -ones(Npatches,1);
 location = -ones(Npatches,2);
 clearance = -ones(Npatches,1);
-
+collFlag = -ones(Npatches,1);
+bodyLoc = -ones(Npatches,2);
 
 % Iterate over all of the patches in the patchArray input
 for patchInd = 1:Npatches
@@ -188,12 +194,16 @@ for patchInd = 1:Npatches
     
     Nobst = size(xobst,1);
     thetaVertex = nan(Nobst,1);
+    bodyXYVertex = nan(Nobst,2);
     thetaIFEdge = nan(Nobst,1);
     xyIFEdge = nan(Nobst,2);
+    bodyXYIFEdge = nan(Nobst,2);
     thetaOFEdge = nan(Nobst,1);
     xyOFEdge = nan(Nobst,2);
+    bodyXYOFEdge = nan(Nobst,2);
     thetaOREdge = nan(Nobst,1);
     xyOREdge = nan(Nobst,2);
+    bodyXYOREdge = nan(Nobst,2);
     
     for vertexInd = 1:Nobst
         % First, determine if the vertex will collide with the front of the car
@@ -201,9 +211,10 @@ for patchInd = 1:Npatches
             % Calculate based on the front of the car
             thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*asin(vehicle.a/vertexRadii(vertexInd));
             thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
+            bodyXYVertex(vertexInd,:) = [vehicle.a R - vertexRadii(vertexInd)];
         elseif vertexRadii(vertexInd) <= RmaxAbs && vertexRadii(vertexInd) >= RminAbs
             % Calculate based on the sides of the car
-            if vertexRadii(vertexInd) <= RinsideAbs & vertexRadii(vertexInd) >= RminAbs
+            if vertexRadii(vertexInd) <= RinsideAbs && vertexRadii(vertexInd) >= RminAbs
                 % Calculate based on the inside of the car. The nearest point
                 % is alongside the CG, so the collision will always happen
                 % ahead of the CG.
@@ -211,6 +222,7 @@ for patchInd = 1:Npatches
                 % Adjust the angle by the computed distance ahead of the CG.
                 thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*atan(alphaa/(Rabs-vehicle.d/2));
                 thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
+                bodyXYVertex(vertexInd,:) = [alphaa vehicle.d/2];
             else
                 % Calculate based on the outside of the car. If the object
                 % cleared the front, it will only hit behind the CG.
@@ -218,6 +230,7 @@ for patchInd = 1:Npatches
                 % Adjust the angle by the computed distance behind the CG.
                 thetaVertex(vertexInd) = vertexAngles(vertexInd) + sign(R)*atan(alphab/(Rabs+vehicle.d/2));
                 thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
+                bodyXYVertex(vertexInd,:) = [-alphab vehicle.d/2];
             end
         end
         % Determine the index of the next vertex to define edges
@@ -259,6 +272,7 @@ for patchInd = 1:Npatches
                     xyOFEdge(vertexInd,:) = xyOFTest;
                 end
                 thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
+                bodyXYOFEdge(vertexInd,:) = [vehicle.a vehicle.d/2];
                 % Split the edge into two parts and test both of them for
                 % intersections with the outer circle
                 [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RmaxAbs);
@@ -268,15 +282,19 @@ for patchInd = 1:Npatches
                     xyOREdge(vertexInd,:) = xyORTest;
                 end
                 thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
+                bodyXYOREdge(vertexInd,:) = [-vehicle.b vehicle.d/2];
             end
         else
             [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RoutsideAbs);
             thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
+            bodyXYOFEdge(vertexInd,:) = [vehicle.a vehicle.d/2];
             [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RmaxAbs);
             thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
+            bodyXYOREdge(vertexInd,:) = [-vehicle.b vehicle.d/2];
         end
         [thetaIFEdge(vertexInd),xyIFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RinsideAbs);
         thetaIFEdge(vertexInd) = thetaIFEdge(vertexInd) - sign(R)*asin(vehicle.a/RinsideAbs);
+        bodyXYIFEdge(vertexInd,:) = [vehicle.a -vehicle.d/2];
         
     end
     % Check for a case where no intersections were calculated
@@ -300,13 +318,13 @@ for patchInd = 1:Npatches
                 clearance(patchInd) = norm(pa + alpha*(pb-pa) - pc) - R;
                 location(patchInd,:) = pa + alpha*(pb-pa);
             else
-                clearance(patchInd) = norm([pa - pc]) - R;
+                clearance(patchInd) = norm(pa - pc) - R;
                 location(patchInd,:) = pa;
             end
         else
             pa = [xobst(nearestInners(1)) yobst(nearestInners(1))];
             theta_offset = 0;
-            clearance(patchInd) = abs(norm([pa - pc]) - R);
+            clearance(patchInd) = abs(norm(pa - pc) - R);
             location(patchInd,:) = pa;
         end
         angle(patchInd) = atan2(location(patchInd,2)-pc(2),location(patchInd,1)-pc(1)) + theta_offset;
@@ -315,7 +333,8 @@ for patchInd = 1:Npatches
         else
             time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
         end
-        
+        % No collision, so no body collision location
+        bodyLoc(patchInd,:) = [NaN NaN];
         
         % Now, find the minimum angular location for the patch object in the
         % vehicle travel direction (indicated by the sign of R)
@@ -340,15 +359,19 @@ for patchInd = 1:Npatches
         if minVertex < minIFEdge && minVertex < minOFEdge && minVertex < minOREdge
             angle(patchInd) = thetaVertex(minVertexInd);
             location(patchInd,:) = [xobst(minVertexInd) yobst(minVertexInd)];
+            bodyLoc(patchInd,:) = bodyXYVertex(minVertexInd,:);
         elseif minIFEdge < minVertex && minIFEdge < minOFEdge && minIFEdge < minOREdge
             angle(patchInd) = thetaIFEdge(minIFEdgeInd);
             location(patchInd,:) = [xyIFEdge(minIFEdgeInd,1) xyIFEdge(minIFEdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYIFEdge(minIFEdgeInd,:);
         elseif minOFEdge < minVertex && minOFEdge < minIFEdge && minOFEdge < minOREdge
             angle(patchInd) = thetaOFEdge(minOFEdgeInd);
             location(patchInd,:) = [xyOFEdge(minOFEdgeInd,1) xyOFEdge(minOFEdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYOFEdge(minOFEdgeInd,:);
         else
             angle(patchInd) = thetaOREdge(minOREdgeInd);
             location(patchInd,:) = [xyOREdge(minOREdgeInd,1) xyOREdge(minOREdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYOREdge(minOREdgeInd,:);
         end
         % With the location set, determine the time required to reach the
         % location
@@ -376,15 +399,19 @@ for patchInd = 1:Npatches
         if minVertex < minIFEdge && minVertex < minOFEdge && minVertex < minOREdge
             angle(patchInd) = thetaVertex(minVertexInd);
             location(patchInd,:) = [xobst(minVertexInd) yobst(minVertexInd)];
+            bodyLoc(patchInd,:) = bodyXYVertex(minVertexInd,:);
         elseif minIFEdge < minVertex && minIFEdge < minOFEdge && minIFEdge < minOREdge
             angle(patchInd) = thetaIFEdge(minIFEdgeInd);
             location(patchInd,:) = [xyIFEdge(minIFEdgeInd,1) xyIFEdge(minIFEdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYIFEdge(minIFEdgeInd,:);
         elseif minOFEdge < minVertex && minOFEdge < minIFEdge && minOFEdge < minOREdge
             angle(patchInd) = thetaOFEdge(minOFEdgeInd);
             location(patchInd,:) = [xyOFEdge(minOFEdgeInd,1) xyOFEdge(minOFEdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYOFEdge(minOFEdgeInd,:);
         else
             angle(patchInd) = thetaOREdge(minOREdgeInd);
             location(patchInd,:) = [xyOREdge(minOREdgeInd,1) xyOREdge(minOREdgeInd,2)];
+            bodyLoc(patchInd,:) = bodyXYOREdge(minOREdgeInd,:);
         end
         % With the location set, determine the time required to reach the
         % location
