@@ -189,15 +189,15 @@ Project Link: [https://github.com/ivsg-psu/FeatureExtraction_Association_PointTo
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/ivsg-psu/repo.svg?style=for-the-badge
-[contributors-url]: https://github.com/ivsg-psu/repo/graphs/contributors
+[contributors-url]: https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/ivsg-psu/repo.svg?style=for-the-badge
-[forks-url]: https://github.com/ivsg-psu/repo/network/members
+[forks-url]: https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/network/members
 [stars-shield]: https://img.shields.io/github/stars/ivsg-psu/repo.svg?style=for-the-badge
-[stars-url]: https://github.com/ivsg-psu/repo/stargazers
+[stars-url]: https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/stargazers
 [issues-shield]: https://img.shields.io/github/issues/ivsg-psu/repo.svg?style=for-the-badge
-[issues-url]: https://github.com/ivsg-psu/repo/issues
+[issues-url]: https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/issues
 [license-shield]: https://img.shields.io/github/license/ivsg-psu/repo.svg?style=for-the-badge
-[license-url]: https://github.com/ivsg-psu/repo/blob/master/LICENSE.txt
+[license-url]: https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/ivsg-psu
 
