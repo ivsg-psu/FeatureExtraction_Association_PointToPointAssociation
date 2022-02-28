@@ -164,7 +164,8 @@ also link to more resources. -->
    ```sh
    script_test_fcn_Patch_checkCollisions
    ```
-_For more examples, please refer to the [Documentation] https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/tree/main/Documents)_
+_For more examples, please refer to the [Documentation] 
+https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/tree/main/Documents)_
 
 
 
