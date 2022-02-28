@@ -68,6 +68,15 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %     2022_02_17
 %     -- wrote the code
 
+% TO DO
+% 1) look for cases where obstacle is inside vehicle, or goes into vehicle,
+% at astart. This would happen, for example, if a barrel gets moved (a
+% "ghost barrel") after the zone is mapped and the AV drives through, then
+% the data may indicate situations where the AV data shows the AV having
+% the object "inside" the vehicle.
+%2) infinite radii? 
+%3) see break case(s)?  
+
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
 

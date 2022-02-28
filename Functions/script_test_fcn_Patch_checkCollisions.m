@@ -5,9 +5,13 @@
 % would have to use either max sideslip angle or change the bounds of the
 % vehicle as it goes around.
 
-getNewData = 0;
+% Notation: px denotes points. For example, p0 is initial point, pc is the
+% center point, etc.
+
+getNewData = 1;
 if 1 == getNewData
     clearvars
+    getNewData = 1;
 end
 
 % Vehicle trajectory information
@@ -23,7 +27,7 @@ vehicle.a = 2.0;       % CG-front axle distance (m)
 vehicle.b = 2.2;        % CG-rear axle distance (m)
 vehicle.d = 2.0;        % vehicle width (m)
 
-% Plot the points
+% Plot the points 
 figure(1)
 clf
 hold on
@@ -55,9 +59,9 @@ travel_offset = h0 - pi/2;
 theta_max_offset = sign(R)*atan2(-vehicle.b,sign(R)*R+vehicle.d/2);
 plot(Rinner*cos(theta+travel_offset) + pc(1),Rinner*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
 plot(Rmin*cos(theta+travel_offset) + pc(1),Rmin*sin(theta+travel_offset) + pc(2),'r-');
-%plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
+plot(Rmax*cos(theta+travel_offset+theta_max_offset) + pc(1),Rmax*sin(theta+travel_offset+theta_max_offset) + pc(2),'b-');
 plot(Router*cos(theta+travel_offset) + pc(1),Router*sin(theta+travel_offset) + pc(2),'-','color',[0.7 0.7 0.7]);
-plot(Rmax*cos(theta+travel_offset) + pc(1),Rmax*sin(theta+travel_offset) + pc(2),'b-');
+% plot(Rmax*cos(theta+travel_offset) + pc(1),Rmax*sin(theta+travel_offset) + pc(2),'b-');
 
 % Now determine where the front corners of the vehicle are at each moment
 plf = zeros(N,2);
@@ -86,16 +90,47 @@ for i = 1:length(inds)
 end
 
 if 1 == getNewData
+    Nobjects = 1;
     % Add an obstacle by clicking to generate the points and then turning the
     % points into a patch object
     obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
     
-    for obstacleInd = 1:4
+    for obstacleInd = 1:Nobjects
         [xobst,yobst] = ginput;
         obstacles(obstacleInd).pointsX = xobst;
         obstacles(obstacleInd).pointsY = yobst;
         obstacles(obstacleInd).color = [0.4 0.4 0.4];
     end
+else
+    %     xobst = [
+    %         6.8899
+    %         7.1416
+    %         23.5009
+    %         23.0695
+    %         ];
+    %     yobst = [
+    %         0.9888
+    %         -2.8943
+    %         -3.8291
+    %         8.9348
+    %         ];
+
+    %     xobst = [
+    %         15.8899
+    %         16.1416
+    %         10000
+    %         23.0695
+    %         ];
+    %     yobst = [
+    %         0.9888
+    %         -2.8943
+    %         -3.8291
+    %         8.9348
+    %         ];
+    %
+    %     obstacles(1).pointsX = xobst;
+    %     obstacles(1).pointsY = yobst;
+    %     obstacles(1).color = [0.4 0.4 0.4];
 end
 % Plot the patch object over the trajectory lines using the patch plotting
 % utility
@@ -107,7 +142,7 @@ tic
 [collFlags,collTime,collAngle,collLoc,clearance,bodyCollLoc] = fcn_Patch_checkCollisions(x0,vehicle,obstacles);
 ET = toc;
 
-fprintf('Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
+fprintf(1,'Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
 
 % Plot the car body
 Rabs = abs(R);
@@ -128,9 +163,9 @@ for collInd = 1:length(collFlags)
     plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
     
     if 1 == collFlags(collInd)
-        fprintf('  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+        fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
     else
-        fprintf('  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+        fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
     end
 end
 
