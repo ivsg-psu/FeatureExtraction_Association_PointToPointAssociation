@@ -165,6 +165,7 @@ also link to more resources. -->
    script_test_fcn_Patch_checkCollisions
    ```
 _For more examples, please refer to the [Documentation] 
+
 https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation/tree/main/Documents)_
 
 
@@ -182,7 +183,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email
 
 Project Link: [https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation](https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation)
-
 
 
 
