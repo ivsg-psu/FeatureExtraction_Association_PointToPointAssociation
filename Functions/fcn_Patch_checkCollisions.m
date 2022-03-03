@@ -67,6 +67,8 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 % Revision history:
 %     2022_02_17
 %     -- wrote the code
+%     2022_03_02
+%     -- substantial debugging of odd cases
 
 % TO DO
 % 1) look for cases where obstacle is inside vehicle, or goes into vehicle,
@@ -74,8 +76,11 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 % "ghost barrel") after the zone is mapped and the AV drives through, then
 % the data may indicate situations where the AV data shows the AV having
 % the object "inside" the vehicle.
+%   -- This is easily done outside of this function with polyxpoly()
 %2) infinite radii? 
 %3) see break case(s)?  
+%    - most fixed, but still run into issue with sideswipe before vehicle
+%    clears its own body length at the start
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
@@ -349,10 +354,11 @@ for patchInd = 1:Npatches
         % vehicle travel direction (indicated by the sign of R)
     elseif R >= 0
         collFlag(patchInd) = 1;
-        [minVertex,minVertexInd] = nanmin(thetaVertex);
-        [minIFEdge,minIFEdgeInd] = nanmin(thetaIFEdge);
-        [minOFEdge,minOFEdgeInd] = nanmin(thetaOFEdge);
-        [minOREdge,minOREdgeInd] = nanmin(thetaOREdge);
+        travelOffset = -h0 + pi/2;
+        [minVertex,minVertexInd] = nanmin(rerangeAngles(thetaVertex+travelOffset));
+        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(thetaIFEdge+travelOffset));
+        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(thetaOFEdge+travelOffset));
+        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(thetaOREdge+travelOffset));
         if isnan(minVertex)
             minVertex = inf;
         end
@@ -389,10 +395,11 @@ for patchInd = 1:Npatches
         collFlag(patchInd) = 1;
         % Shift the angles into the negative range for comparison with the
         % max function (this isn't correct)
-        [minVertex,minVertexInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaVertex));
-        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaIFEdge));
-        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaOFEdge));
-        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(h0 + pi/2 - thetaOREdge));
+        travelOffset = h0 + pi/2;
+        [minVertex,minVertexInd] = nanmin(rerangeAngles(travelOffset - thetaVertex));
+        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(travelOffset - thetaIFEdge));
+        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(travelOffset - thetaOFEdge));
+        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(travelOffset - thetaOREdge));
         if isnan(minVertex)
             minVertex = inf;
         end
