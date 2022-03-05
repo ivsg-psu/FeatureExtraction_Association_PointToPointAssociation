@@ -16,7 +16,7 @@ end
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
-R = 10;         % path radius (m) with sign (+ left, - right)
+R = inf;         % path radius (m) with sign (+ left, - right)
 p0 = [0,0];     % initial position of vehicle (m,m)
 h0 = -pi/2;      % initial heading of vehicle (rad)
 tf = 2.36;         % time horizon to check (s)

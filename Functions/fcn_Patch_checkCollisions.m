@@ -2,7 +2,7 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 % fcn_Patch_checkCollisions
 % Evaluates a circular vehicle trajectory against a series of patches to
 % determine whether there will be collisions between the vehicle and the
-% convex hull of any of the patch objects.
+% outline of any of the patch objects.
 %
 % ASSUMPTIONS:
 %       1) The vehicle moves at constant speed along a circular trajectory.
