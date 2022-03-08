@@ -7,6 +7,7 @@ function [trajectoryRadii,boundingPoints,radiiFlags] = fcn_Patch_CalcCircularTra
 % ASSUMPTIONS:
 %       1) The vehicle moves at constant speed along a circular trajectory.
 %       2) The vehicle is represented by a bounding rectangle.
+%       3) The vehicle slip angle is limited to [-90,90] degrees
 %       4) A positive trajectory radius indicates CCW travel. Negative
 %       indicates CW.
 %
@@ -111,6 +112,11 @@ if flag_check_inputs == 1
     if 0 == x0(6)
         error('Vehicle trajectory radius must have magnitude greater than zero');
     end
+    
+    % Make sure the vehicle slip angle is not being 90 degrees in magnitude
+    if pi/2 < abs(x0(4))
+        error('Vehicle slip angle must have magnitude less than pi/2 (90 degrees)');
+    end    
     
     % Check the vehicle structure input to make sure that the dimensions a,
     % b, and d are all supplied
