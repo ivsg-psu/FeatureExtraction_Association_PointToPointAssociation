@@ -6,10 +6,8 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %
 % ASSUMPTIONS:
 %       1) The vehicle moves at constant speed along a circular trajectory.
-%       2) The vehicle travels with zero sideslip angle.
-%       3) The vehicle is represented by a bounding rectangle.
-%       4) The objects are represented by their convex hull.
-%       5) A positive trajectory radius indicates CCW travel. Negative
+%       2) The vehicle is represented by a bounding rectangle.
+%       4) A positive trajectory radius indicates CCW travel. Negative
 %       indicates CW.
 %
 % FORMAT:
@@ -18,12 +16,14 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %
 % INPUTS:
 %
-%      x0: a 5 x 1 vector containing the starting (x,y) coordinates of the
-%           vehicle, the initial heading, the longitudinal vehicle speed,
-%           and the signed trajectory radius in (m,m), radians, m/s, and m.
+%      x0: a 6 x 1 vector containing the starting (x,y) coordinates of the
+%           vehicle, the initial heading, the body slip angle, the
+%           longitudinal vehicle speed, and the signed trajectory radius in
+%           (m,m), radians, radians, m/s, and m.
 %      vehicle: a structure containing the vehicle properties, which must
-%           include fields a, b, d for the vehicle CG-front axle distance,
-%           CG-rear axle distance, and body width, in meters, respectively.
+%           include fields df, dr, w for the vehicle CG-front bumper
+%           distance, CG-rear bumper distance, and body width, in meters,
+%           respectively.
 %      patchArray: a structure array defining the objects with which the
 %           vehicle could potentially collide
 %
@@ -52,9 +52,8 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %
 % DEPENDENCIES:
 %
-%      fcn_Patch_determineAABB
-%
-%      ## NOT CURRENTLY USED: fcn_Patch_checkInputsToFunctions
+%       No dependencies. (Determine later whether to adapt to using the
+%       geometry library for the line segment-circle intersections.)
 %
 % EXAMPLES:
 %
@@ -71,18 +70,12 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %     -- substantial debugging of odd cases
 
 % TO DO
-% 1) look for cases where obstacle is inside vehicle, or goes into vehicle,
-% at astart. This would happen, for example, if a barrel gets moved (a
-% "ghost barrel") after the zone is mapped and the AV drives through, then
-% the data may indicate situations where the AV data shows the AV having
-% the object "inside" the vehicle.
-%   -- This is easily done outside of this function with polyxpoly()
-%2) infinite radii? 
-%3) see break case(s)?  
+%   1) 
+%   2) break case(s)  
 %    - most fixed, but still run into issue with sideswipe before vehicle
 %    clears its own body length at the start
 
-flag_do_debug = 0; % Flag to plot the results for debugging
+flag_do_debug = 1; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
@@ -118,22 +111,22 @@ if flag_check_inputs == 1
     end
     
     % Check the trajectory input
-    if size(x0,1) ~= 5
+    if size(x0,1) ~= 6
         error('Vehicle trajectory missing elements, cannot calculate collisions.')
     end
     
     % Check the vehicle structure input to make sure that the dimensions a,
     % b, and d are all supplied
-    if ~all(isfield(vehicle,{'a','b','d'}))
+    if ~all(isfield(vehicle,{'df','dr','w'}))
         error('One or more necessary vehicle dimensions missing. Check inputs.')
     end
-    if isfield(vehicle,'a') && isempty(vehicle.a)
+    if isfield(vehicle,'df') && isempty(vehicle.df)
         error('CG-front axle distance empty.')
     end
-    if isfield(vehicle,'b') && isempty(vehicle.a)
+    if isfield(vehicle,'dr') && isempty(vehicle.df)
         error('CG-rear axle distance empty.')
     end
-    if isfield(vehicle,'d') && isempty(vehicle.a)
+    if isfield(vehicle,'w') && isempty(vehicle.df)
         error('Vehicle width empty.')
     end
 end
@@ -154,8 +147,9 @@ end
 % Break out some variables for easier referencing
 p0 = x0(1:2);   % Initial location of the vehicle
 h0 = x0(3);     % Initial heading of the vehicle
-v0 = x0(4);     % Initial (and constant) vehicle speed
-R = x0(5);      % Radius of the circular trajectory
+a0 = x0(4);     % Vehicle body slip angle
+v0 = x0(5);     % Initial (and constant) vehicle speed
+R = x0(6);      % Radius of the circular trajectory
 
 % Determine the number of patches to check
 Npatches = length(patchArray);
@@ -164,19 +158,20 @@ Npatches = length(patchArray);
 pc(1) = p0(1) + R*cos(h0+pi/2);
 pc(2) = p0(2) + R*sin(h0+pi/2);
 
-% Determine the signed and unsigned bounding radii for all portions of
-% the vehicle
-Rabs = abs(R);
-Rmin = R - vehicle.d/2*sign(R);
-RminAbs = abs(Rmin);
-Rmax = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + max(vehicle.a,vehicle.b)^2);
-RmaxAbs = abs(Rmax);
+% Determine the unsigned bounding radii for all portions of
+% the vehicle as well as the radii for the front left and front right corners
+% Calculate the various pertinent radii and corner points of the vehicle
+[radii,vehicleBB,radiiFlags] = fcn_Patch_CalcCircularTrajectoryGeometry(x0,vehicle);
 
-% Find the radii for the front left and front right corners
-Rinside = sign(R)*sqrt((R-vehicle.d/2*sign(R))^2 + vehicle.a^2);
-RinsideAbs = abs(Rinside);
-Routside = sign(R)*sqrt((R+vehicle.d/2*sign(R))^2 + vehicle.a^2);
-RoutsideAbs = abs(Routside);
+% Parse out which radii are which
+Rinside = sign(R)*radii(1);
+RoutsideFront = sign(R)*radii(2);
+RoutsideRear = sign(R)*radii(3);
+Rmin = sign(R)*radii(6);
+Rmax = sign(R)*radii(7);
+
+% Determine which edges of the vehicle are relevant to check
+% CEB: FILL IN HERE
 
 % Pre-allocate the results with negative numbers (not viable results) for
 % debugging purposes
@@ -189,23 +184,17 @@ bodyLoc = -ones(Npatches,2);
 
 % Iterate over all of the patches in the patchArray input
 for patchInd = 1:Npatches
-    % Determine the point indices that are on the convex hull (CEB: appears
-    % not to be necessary)
-    % convInds = convhull(patchArray(patchInd).pointsX,patchArray(patchInd).pointsY);
-    % Subset the patch points to evaluate just the points on the hull
+    % Pull out the points into temporary vectors for code brevity
     xobst = patchArray(patchInd).pointsX;
     yobst = patchArray(patchInd).pointsY;
-    % CEB: Determine which of the indices and edges are relevant for this
-    % check? If both indices are outside of the annulus *and* the edge does
-    % not cross through, it is not relevant here. (Is this correct?)
-    % Vertices are relevant if
-    % the vertex in the annulus or the next edge crosses through.
     
     % Determine the distance from the center of the vehicle trajectory for
-    % all convex hull points of each of the obstacles
+    % all vertices on the object
     vertexRadii = sqrt((xobst - pc(1)).^2 + (yobst - pc(2)).^2);
     vertexAngles = atan2(yobst - pc(2), xobst - pc(1));
     
+    % Pre-allocate temporary vectors/matrices for checking the various
+    % intersections to determine the nearest one
     Nobst = size(xobst,1);
     thetaVertex = nan(Nobst,1);
     bodyXYVertex = nan(Nobst,2);
@@ -223,28 +212,28 @@ for patchInd = 1:Npatches
         % First, determine if the vertex will collide with the front of the car
         if vertexRadii(vertexInd) <= RoutsideAbs && vertexRadii(vertexInd) >= RinsideAbs
             % Calculate based on the front of the car
-            thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*asin(vehicle.a/vertexRadii(vertexInd));
+            thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*asin(vehicle.df/vertexRadii(vertexInd));
             thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-            bodyXYVertex(vertexInd,:) = [vehicle.a R - vertexRadii(vertexInd)];
+            bodyXYVertex(vertexInd,:) = [vehicle.df R - vertexRadii(vertexInd)];
         elseif vertexRadii(vertexInd) <= RmaxAbs && vertexRadii(vertexInd) >= RminAbs
             % Calculate based on the sides of the car
             if vertexRadii(vertexInd) <= RinsideAbs && vertexRadii(vertexInd) >= RminAbs
                 % Calculate based on the inside of the car. The nearest point
                 % is alongside the CG, so the collision will always happen
                 % ahead of the CG.
-                alphaa = sqrt(vertexRadii(vertexInd)^2 - (Rabs-vehicle.d/2)^2);
+                alphaa = sqrt(vertexRadii(vertexInd)^2 - (Rabs-vehicle.w/2)^2);
                 % Adjust the angle by the computed distance ahead of the CG.
-                thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*atan(alphaa/(Rabs-vehicle.d/2));
+                thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*atan(alphaa/(Rabs-vehicle.w/2));
                 thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-                bodyXYVertex(vertexInd,:) = [alphaa vehicle.d/2];
+                bodyXYVertex(vertexInd,:) = [alphaa vehicle.w/2];
             else
                 % Calculate based on the outside of the car. If the object
                 % cleared the front, it will only hit behind the CG.
-                alphab = sqrt(vertexRadii(vertexInd)^2 - (Rabs+vehicle.d/2)^2);
+                alphab = sqrt(vertexRadii(vertexInd)^2 - (Rabs+vehicle.w/2)^2);
                 % Adjust the angle by the computed distance behind the CG.
-                thetaVertex(vertexInd) = vertexAngles(vertexInd) + sign(R)*atan(alphab/(Rabs+vehicle.d/2));
+                thetaVertex(vertexInd) = vertexAngles(vertexInd) + sign(R)*atan(alphab/(Rabs+vehicle.w/2));
                 thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-                bodyXYVertex(vertexInd,:) = [-alphab vehicle.d/2];
+                bodyXYVertex(vertexInd,:) = [-alphab vehicle.w/2];
             end
         end
         % Determine the index of the next vertex to define edges
@@ -285,8 +274,8 @@ for patchInd = 1:Npatches
                     thetaOFEdge(vertexInd) = thetaOFTest;
                     xyOFEdge(vertexInd,:) = xyOFTest;
                 end
-                thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
-                bodyXYOFEdge(vertexInd,:) = [vehicle.a vehicle.d/2];
+                thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.df/RoutsideAbs);
+                bodyXYOFEdge(vertexInd,:) = [vehicle.df vehicle.w/2];
                 % Split the edge into two parts and test both of them for
                 % intersections with the outer circle
                 [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RmaxAbs);
@@ -295,20 +284,20 @@ for patchInd = 1:Npatches
                     thetaOREdge(vertexInd) = thetaORTest;
                     xyOREdge(vertexInd,:) = xyORTest;
                 end
-                thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
-                bodyXYOREdge(vertexInd,:) = [-vehicle.b vehicle.d/2];
+                thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.dr/RmaxAbs);
+                bodyXYOREdge(vertexInd,:) = [-vehicle.dr vehicle.w/2];
             end
         else
             [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RoutsideAbs);
-            thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.a/RoutsideAbs);
-            bodyXYOFEdge(vertexInd,:) = [vehicle.a vehicle.d/2];
+            thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.df/RoutsideAbs);
+            bodyXYOFEdge(vertexInd,:) = [vehicle.df vehicle.w/2];
             [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RmaxAbs);
-            thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.b/RmaxAbs);
-            bodyXYOREdge(vertexInd,:) = [-vehicle.b vehicle.d/2];
+            thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.dr/RmaxAbs);
+            bodyXYOREdge(vertexInd,:) = [-vehicle.dr vehicle.w/2];
         end
         [thetaIFEdge(vertexInd),xyIFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RinsideAbs);
-        thetaIFEdge(vertexInd) = thetaIFEdge(vertexInd) - sign(R)*asin(vehicle.a/RinsideAbs);
-        bodyXYIFEdge(vertexInd,:) = [vehicle.a -vehicle.d/2];
+        thetaIFEdge(vertexInd) = thetaIFEdge(vertexInd) - sign(R)*asin(vehicle.df/RinsideAbs);
+        bodyXYIFEdge(vertexInd,:) = [vehicle.df -vehicle.w/2];
         
     end
     % Check for a case where no intersections were calculated
@@ -321,7 +310,7 @@ for patchInd = 1:Npatches
         if max(0,nearestOuterClearance) > max(nearestInnerClearance)
             pa = [xobst(nearestOuters(1)) yobst(nearestOuters(1))];
             pb = [xobst(nearestOuters(2)) yobst(nearestOuters(2))];
-            theta_offset = sign(R)*asin(vehicle.b/Rabs);
+            theta_offset = sign(R)*asin(vehicle.dr/Rabs);
             % Compute the alpha associated with the min radius
             alpha = -((pa(1)-pc(1))*(pb(1)-pa(1)) + (pa(2)-pc(2))*(pb(2)-pa(2)))/((pb(1)-pa(1))^2 + (pb(2)-pa(2))^2);
             % Check to see if the minimum clearance is along the edge between
@@ -456,7 +445,6 @@ end
 % where the edge could be larger than the circle itself and thus have two
 % intersections
 function [intAngle,intPoint] = intersectEdgeWithCircle(pa,pb,pc,R)
-
 % First check to see if an intersection is possible
 Rabs = abs(R);
 if (norm(pa-pc) < Rabs && norm(pb-pc) < Rabs) || (norm(pa-pc) > Rabs && norm(pb-pc) > Rabs)
@@ -469,21 +457,6 @@ else
     quadCoefs(1) = (pb(1) - pa(1))^2 + (pb(2) - pa(2))^2;
     quadCoefs(2) = 2*((pa(1)-pc(1))*(pb(1) - pa(1)) + (pa(2)-pc(2))*(pb(2) - pa(2)));
     quadCoefs(3) = (pa(1)-pc(1))^2 + (pa(2)-pc(2))^2 - R^2;
-    % Check the conditions on the coefficients to obtain alpha between
-    % 0 and 1 and solve for alpha. The quadratic coefficients 1 and 3
-    % should always be positive. The discriminant should always be
-    % positive or zero as well, since we eliminate cases where there is
-    % no intersection or multiple intersections. Thus, we only need to
-    % worry about whether to use the root from the + or - operation in
-    % the quadratic formula. We can determine this by testing to see if
-    % the first term in the quadratic formula is greater than 1. If so,
-    % we need to use the root with the negative sign. Otherwise, we use
-    % the root with the positive sign.
-    %     if -quadCoefs(2)/(2*quadCoefs(1)) < 0
-    %         alpha = (-quadCoefs(2) - sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
-    %     else
-    %         alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
-    %     end
     % Calculate the additive root for alpha
     alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
     % Check to see if the solution should come from the subtractive root

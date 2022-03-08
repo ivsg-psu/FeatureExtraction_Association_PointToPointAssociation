@@ -74,7 +74,7 @@ function [trajectoryRadii,boundingPoints,radiiFlags] = fcn_Patch_CalcCircularTra
 %     2022_03_08
 %     -- wrote the code
 
-flag_do_debug = 1; % Flag to plot the results for debugging
+flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
