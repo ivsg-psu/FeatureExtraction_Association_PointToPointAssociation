@@ -19,9 +19,9 @@ tf = 4;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; vx];
 % Vehicle dimensional information
-vehicle.a = 1.8;       % CG-front axle distance (m)
-vehicle.b = 2.2;        % CG-rear axle distance (m)
-vehicle.d = 2.0;        % vehicle width (m)
+vehicle.df = 1.8;       % CG-front bumper distance (m)
+vehicle.dr = 2.2;        % CG-rear bumper distance (m)
+vehicle.w = 2.0;        % vehicle width (m)
 
 % Plot the points
 figure(1)
@@ -43,9 +43,9 @@ pv(:,2) = d*sin(h0) + p0(2);
 plot(pv(:,1),pv(:,2),'k-.')
 
 % Plot the outer limits of the vehicle trajectory
-%plot(pv(:,1)+vehicle.d/2*sin(h0),pv(:,2)-vehicle.d/2*cos(h0),'b');
-plot(pv(:,1)-vehicle.b*cos(h0)-vehicle.d/2*sin(h0),pv(:,2)-vehicle.b*sin(h0)+vehicle.d/2*cos(h0),'b');
-plot(pv(:,1)-vehicle.b*cos(h0)+vehicle.d/2*sin(h0),pv(:,2)-vehicle.b*sin(h0)-vehicle.d/2*cos(h0),'r');
+%plot(pv(:,1)+vehicle.w/2*sin(h0),pv(:,2)-vehicle.w/2*cos(h0),'b');
+plot(pv(:,1)-vehicle.dr*cos(h0)-vehicle.w/2*sin(h0),pv(:,2)-vehicle.dr*sin(h0)+vehicle.w/2*cos(h0),'b');
+plot(pv(:,1)-vehicle.dr*cos(h0)+vehicle.w/2*sin(h0),pv(:,2)-vehicle.dr*sin(h0)-vehicle.w/2*cos(h0),'r');
 %axis([-10+p0(1) 10+p0(1) -10+p0(2) 10+p0(2)])
 
 % Now determine where the front corners of the vehicle are at each moment
@@ -53,14 +53,14 @@ plot(pv(:,1)-vehicle.b*cos(h0)+vehicle.d/2*sin(h0),pv(:,2)-vehicle.b*sin(h0)-veh
 % prf = zeros(N,2);
 % plr = zeros(N,2);
 % prr = zeros(N,2);
-% plf(:,1) = pv(:,1) + vehicle.a*cos(theta+h0) + vehicle.d/2*cos(theta+h0+pi/2);
-% plf(:,2) = pv(:,2) + vehicle.a*sin(theta+h0) + vehicle.d/2*sin(theta+h0+pi/2);
-% prf(:,1) = pv(:,1) + vehicle.a*cos(theta+h0) + vehicle.d/2*cos(theta+h0-pi/2);
-% prf(:,2) = pv(:,2) + vehicle.a*sin(theta+h0) + vehicle.d/2*sin(theta+h0-pi/2);
-% plr(:,1) = pv(:,1) - vehicle.b*cos(theta+h0) + vehicle.d/2*cos(theta+h0+pi/2);
-% plr(:,2) = pv(:,2) - vehicle.b*sin(theta+h0) + vehicle.d/2*sin(theta+h0+pi/2);
-% prr(:,1) = pv(:,1) - vehicle.b*cos(theta+h0) + vehicle.d/2*cos(theta+h0-pi/2);
-% prr(:,2) = pv(:,2) - vehicle.b*sin(theta+h0) + vehicle.d/2*sin(theta+h0-pi/2);
+% plf(:,1) = pv(:,1) + vehicle.df*cos(theta+h0) + vehicle.w/2*cos(theta+h0+pi/2);
+% plf(:,2) = pv(:,2) + vehicle.df*sin(theta+h0) + vehicle.w/2*sin(theta+h0+pi/2);
+% prf(:,1) = pv(:,1) + vehicle.df*cos(theta+h0) + vehicle.w/2*cos(theta+h0-pi/2);
+% prf(:,2) = pv(:,2) + vehicle.df*sin(theta+h0) + vehicle.w/2*sin(theta+h0-pi/2);
+% plr(:,1) = pv(:,1) - vehicle.dr*cos(theta+h0) + vehicle.w/2*cos(theta+h0+pi/2);
+% plr(:,2) = pv(:,2) - vehicle.dr*sin(theta+h0) + vehicle.w/2*sin(theta+h0+pi/2);
+% prr(:,1) = pv(:,1) - vehicle.dr*cos(theta+h0) + vehicle.w/2*cos(theta+h0-pi/2);
+% prr(:,2) = pv(:,2) - vehicle.dr*sin(theta+h0) + vehicle.w/2*sin(theta+h0-pi/2);
 % And plot the front corners continuously
 % plot(plf(:,1),plf(:,2),'r-')
 % plot(prf(:,1),prf(:,2),'b-')
@@ -94,7 +94,7 @@ axis auto
 
 %% Check for a collision at the initial configuration
 initial_collision_flag = 0;
-% matA = [vehicle.a*ones(2,1) vehicle.d/2*[1; -1]; -vehicle.b*ones(2,1) vehicle.d/2*[-1; 1]; vehicle.a vehicle.d/2];
+% matA = [vehicle.df*ones(2,1) vehicle.w/2*[1; -1]; -vehicle.dr*ones(2,1) vehicle.w/2*[-1; 1]; vehicle.df vehicle.w/2];
 % matB = [cosd(h0) sind(h0); sind(h0) -cosd(h0)];
 % carBoundBox = matA*matB;
 % 
@@ -117,8 +117,8 @@ if 0 == initial_collision_flag
     
     fprintf(1,'Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
     
-%plot(pv(:,1)-vehicle.b*cos(h0)-vehicle.d/2*sin(h0),pv(:,2)-vehicle.b*sin(h0)+vehicle.d/2*cos(h0),'b');
-%plot(pv(:,1)-vehicle.b*cos(h0)+vehicle.d/2*sin(h0),pv(:,2)-vehicle.b*sin(h0)-vehicle.d/2*cos(h0),'r');
+%plot(pv(:,1)-vehicle.dr*cos(h0)-vehicle.w/2*sin(h0),pv(:,2)-vehicle.dr*sin(h0)+vehicle.w/2*cos(h0),'b');
+%plot(pv(:,1)-vehicle.dr*cos(h0)+vehicle.w/2*sin(h0),pv(:,2)-vehicle.dr*sin(h0)-vehicle.w/2*cos(h0),'r');
     % Determine the offsets from the collision (or near miss) location in
     % order to plot the vehicle body in the correct location
     % Plot the car body
@@ -129,14 +129,14 @@ if 0 == initial_collision_flag
         else
             plotOffset(2) = bodyCollLoc(collInd,2) + sign(bodyCollLoc(collInd,2))*clearance(collInd);
         end
-        bodyLoc(1,1) = collLoc(collInd,1) + (vehicle.a - plotOffset(1))*cos(h0) - (vehicle.d/2-plotOffset(2))*sin(h0);
-        bodyLoc(1,2) = collLoc(collInd,2) + (vehicle.a - plotOffset(1))*sin(h0) + (vehicle.d/2-plotOffset(2))*cos(h0);
-        bodyLoc(2,1) = collLoc(collInd,1) + (vehicle.a - plotOffset(1))*cos(h0) - (-vehicle.d/2-plotOffset(2))*sin(h0);
-        bodyLoc(2,2) = collLoc(collInd,2) + (vehicle.a - plotOffset(1))*sin(h0) + (-vehicle.d/2-plotOffset(2))*cos(h0);
-        bodyLoc(3,1) = collLoc(collInd,1) + (-vehicle.b - plotOffset(1))*cos(h0) - (-vehicle.d/2-plotOffset(2))*sin(h0);
-        bodyLoc(3,2) = collLoc(collInd,2) + (-vehicle.b - plotOffset(1))*sin(h0) + (-vehicle.d/2-plotOffset(2))*cos(h0);
-        bodyLoc(4,1) = collLoc(collInd,1) + (-vehicle.b - plotOffset(1))*cos(h0) - (vehicle.d/2-plotOffset(2))*sin(h0);
-        bodyLoc(4,2) = collLoc(collInd,2) + (-vehicle.b - plotOffset(1))*sin(h0) + (vehicle.d/2-plotOffset(2))*cos(h0);
+        bodyLoc(1,1) = collLoc(collInd,1) + (vehicle.df - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
+        bodyLoc(1,2) = collLoc(collInd,2) + (vehicle.df - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
+        bodyLoc(2,1) = collLoc(collInd,1) + (vehicle.df - plotOffset(1))*cos(h0) - (-vehicle.w/2-plotOffset(2))*sin(h0);
+        bodyLoc(2,2) = collLoc(collInd,2) + (vehicle.df - plotOffset(1))*sin(h0) + (-vehicle.w/2-plotOffset(2))*cos(h0);
+        bodyLoc(3,1) = collLoc(collInd,1) + (-vehicle.dr - plotOffset(1))*cos(h0) - (-vehicle.w/2-plotOffset(2))*sin(h0);
+        bodyLoc(3,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + (-vehicle.w/2-plotOffset(2))*cos(h0);
+        bodyLoc(4,1) = collLoc(collInd,1) + (-vehicle.dr - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
+        bodyLoc(4,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
         figure(1)
         plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
         

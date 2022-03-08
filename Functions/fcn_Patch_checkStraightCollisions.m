@@ -19,8 +19,9 @@ function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCol
 %           vehicle, the initial heading, and the longitudinal vehicle
 %           speed, in (m,m), radians, m/s, and m.
 %      vehicle: a structure containing the vehicle properties, which must
-%           include fields a, b, d for the vehicle CG-front axle distance,
-%           CG-rear axle distance, and body width, in meters, respectively.
+%           include fields df, dr, w for the vehicle CG-front bumper
+%           distance, CG-rear bumper distance, and body width, in meters,
+%           respectively.
 %      patchArray: a structure array defining the objects with which the
 %           vehicle could potentially collide
 %
@@ -104,16 +105,16 @@ if flag_check_inputs == 1
     
     % Check the vehicle structure input to make sure that the dimensions a,
     % b, and d are all supplied
-    if ~all(isfield(vehicle,{'a','b','d'}))
+    if ~all(isfield(vehicle,{'df','dr','w'}))
         error('One or more necessary vehicle dimensions missing. Check inputs.')
     end
-    if isfield(vehicle,'a') && isempty(vehicle.a)
+    if isfield(vehicle,'df') && isempty(vehicle.df)
         error('CG-front axle distance empty.')
     end
-    if isfield(vehicle,'b') && isempty(vehicle.a)
+    if isfield(vehicle,'dr') && isempty(vehicle.df)
         error('CG-rear axle distance empty.')
     end
-    if isfield(vehicle,'d') && isempty(vehicle.a)
+    if isfield(vehicle,'w') && isempty(vehicle.df)
         error('Vehicle width empty.')
     end
 end
@@ -156,15 +157,15 @@ for patchInd = 1:Npatches
     rotObst = (rotMat*[xobst yobst]')';
     
     % Determine any obstacles that lie within or across the vehicle path on
-    % the positive the x-axis between the back of the vehicle (-vehicle.b)
+    % the positive the x-axis between the back of the vehicle (-vehicle.dr)
     % and some large distance (1e6)
-    [xColl,yColl] = polyxpoly([-vehicle.b 1e6 1e6 -vehicle.b -vehicle.b],...
-        [-1 -1 1 1 -1]*vehicle.d/2,rotObst([1:end 1],1),rotObst([1:end 1],2));
+    [xColl,yColl] = polyxpoly([-vehicle.dr 1e6 1e6 -vehicle.dr -vehicle.dr],...
+        [-1 -1 1 1 -1]*vehicle.w/2,rotObst([1:end 1],1),rotObst([1:end 1],2));
     
     % Determine any vertices that fall within the trajectory that are
     % within the width of the vehicle on the x-axis between the back of the
-    % vehicle (-vehicle.b) and some large distance (1e6)
-    collVertexInds = find(abs(rotObst(:,2)) < 1 & rotObst(:,1) > -vehicle.b);
+    % vehicle (-vehicle.dr) and some large distance (1e6)
+    collVertexInds = find(abs(rotObst(:,2)) < 1 & rotObst(:,1) > -vehicle.dr);
     
     % Add any vertices that are within the path to the list of collision
     % locations that will be evaluated to find the earliest one on the path
@@ -184,24 +185,24 @@ for patchInd = 1:Npatches
         [~,closestCollInd] = min(xColl);
         % Check to see if the collision happens immediately (already in
         % collision state)
-        if xColl(closestCollInd) < vehicle.a
+        if xColl(closestCollInd) < vehicle.df
             % Fill the output variable for the collision location, rotated
             % and translated back to the original coordinate system
             location(patchInd,:) = ([xColl(closestCollInd) yColl(closestCollInd)]*rotMat)' + p0;
             % Call out the location on the vehicle body as the point on the
             % width of the front of the vehicle that matches the obstacle
-            bodyLoc(patchInd,:) = [vehicle.a yColl(closestCollInd)];
+            bodyLoc(patchInd,:) = [vehicle.df yColl(closestCollInd)];
             % Compute the time of the collision (negative since it already
             % happened)
-            time(patchInd) = (xColl(closestCollInd)-vehicle.a)/v0;
+            time(patchInd) = (xColl(closestCollInd)-vehicle.df)/v0;
         else
             % Determine the time to reach the collision location that is in
             % front of the vehicle
-            time(patchInd) = (xColl(closestCollInd)-vehicle.a)/v0;
+            time(patchInd) = (xColl(closestCollInd)-vehicle.df)/v0;
             % The object will collide with the front of the vehicle, but
             % use the y-coordinate of the collision to determine where on
             % the front of the vehicle
-            bodyLoc(patchInd,:) = [vehicle.a yColl(closestCollInd)];
+            bodyLoc(patchInd,:) = [vehicle.df yColl(closestCollInd)];
             % Fill the output variable for the collision location, rotated
             % and translated back to the original coordinate system
             location(patchInd,:) = ([xColl(closestCollInd) yColl(closestCollInd)]*rotMat)' + p0;
@@ -212,13 +213,13 @@ for patchInd = 1:Npatches
         collFlag(patchInd) = 0;
         % Now find the minimum clearance of all of the points on the
         % obstacle
-        [clearance(patchInd),minClearanceInd] = min(abs(rotObst(:,2))-vehicle.d/2);
+        [clearance(patchInd),minClearanceInd] = min(abs(rotObst(:,2))-vehicle.w/2);
         % Determine whether the near miss is on the right or left front
         % corner of the vehicle and store the result
-        bodyLoc(patchInd,:) = [vehicle.a vehicle.d/2*sign(rotObst(minClearanceInd,2))];
+        bodyLoc(patchInd,:) = [vehicle.df vehicle.w/2*sign(rotObst(minClearanceInd,2))];
         % Determine the time to get to the minimum clearance location with
         % the front of the vehicle
-        time(patchInd) = (rotObst(minClearanceInd,1)-vehicle.a)/v0;
+        time(patchInd) = (rotObst(minClearanceInd,1)-vehicle.df)/v0;
         % Store the location of the minimum clearance location, rotated
         % and translated back to the original coordinate system
         location(patchInd,:) = (rotObst(minClearanceInd,:)*rotMat)' + p0;
