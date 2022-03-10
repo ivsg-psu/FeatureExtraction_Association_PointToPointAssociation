@@ -52,8 +52,8 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %
 % DEPENDENCIES:
 %
-%       No dependencies. (Determine later whether to adapt to using the
-%       geometry library for the line segment-circle intersections.)
+%       fcn_geometry_findIntersectionLineSegmentWithCircle.m from the PSU
+%       geometry library
 %
 % EXAMPLES:
 %
@@ -70,10 +70,10 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %     -- substantial debugging of odd cases
 
 % TO DO
-%   1) 
-%   2) break case(s)  
-%    - most fixed, but still run into issue with sideswipe before vehicle
-%    clears its own body length at the start
+%   1) Does not work properly for negative radii
+%   2) Search for other break cases
+%       - collisions right after start points, hampered by determining
+%       which of the double intersections to treat
 
 flag_do_debug = 1; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
@@ -151,12 +151,21 @@ a0 = x0(4);     % Vehicle body slip angle
 v0 = x0(5);     % Initial (and constant) vehicle speed
 R = x0(6);      % Radius of the circular trajectory
 
+% Enumerate some variables for easier code reading
+LF = 1;
+RF = 2;
+RR = 3;
+LR = 4;
+IT = 5; % Inside tangent edge
+X = 1;
+Y = 2;
+
 % Determine the number of patches to check
 Npatches = length(patchArray);
 
 % Calculate center point of vehicle trajectory circle
-pc(1) = p0(1) + R*cos(h0+pi/2);
-pc(2) = p0(2) + R*sin(h0+pi/2);
+pc(X) = p0(X) + R*cos(h0+pi/2);
+pc(Y) = p0(Y) + R*sin(h0+pi/2);
 
 % Determine the unsigned bounding radii for all portions of
 % the vehicle as well as the radii for the front left and front right corners
@@ -164,14 +173,40 @@ pc(2) = p0(2) + R*sin(h0+pi/2);
 [radii,vehicleBB,radiiFlags] = fcn_Patch_CalcCircularTrajectoryGeometry(x0,vehicle);
 
 % Parse out which radii are which
-Rinside = sign(R)*radii(1);
-RoutsideFront = sign(R)*radii(2);
-RoutsideRear = sign(R)*radii(3);
-Rmin = sign(R)*radii(6);
-Rmax = sign(R)*radii(7);
+R_LF = radii(LF);
+R_RF = radii(RF);
+R_RR = radii(RR);
+R_LR = radii(LR);
+R_IT = radii(IT);
+Rmin = radii(6);
+Rmax = radii(7);
 
-% Determine which edges of the vehicle are relevant to check
-% CEB: FILL IN HERE
+% Determine which edges of the vehicle are relevant to check. A side needs
+% to be checked if the rear point is on the min or max radius
+flag_check_left_side = 1; flag_check_left_tangent = 0;
+flag_check_right_side = 1; flag_check_right_tangent = 0;
+% if LF == radiiFlags(1) || LF == radiiFlags(2)
+%     flag_check_left_side = 0;
+% end
+if (R > 0 && IT == radiiFlags(1))
+    flag_check_left_tangent = 1;
+    flag_check_left_side = 0;
+end
+% if RF == radiiFlags(1) || RF == radiiFlags(2)
+%     flag_check_right_side = 0;
+% end
+if (R < 0 && IT == radiiFlags(1))
+    flag_check_right_tangent = 1;
+    flag_check_right_side = 0;
+end
+if flag_do_debug
+    if flag_check_left_side && flag_check_left_tangent
+        error('Bad combination of vehicle side checks (left side)')
+    end
+    if flag_check_right_side && flag_check_right_tangent
+        error('Bad combination of vehicle side checks (right side)')
+    end
+end
 
 % Pre-allocate the results with negative numbers (not viable results) for
 % debugging purposes
@@ -193,124 +228,167 @@ for patchInd = 1:Npatches
     vertexRadii = sqrt((xobst - pc(1)).^2 + (yobst - pc(2)).^2);
     vertexAngles = atan2(yobst - pc(2), xobst - pc(1));
     
-    % Pre-allocate temporary vectors/matrices for checking the various
-    % intersections to determine the nearest one
-    Nobst = size(xobst,1);
-    thetaVertex = nan(Nobst,1);
-    bodyXYVertex = nan(Nobst,2);
-    thetaIFEdge = nan(Nobst,1);
-    xyIFEdge = nan(Nobst,2);
-    bodyXYIFEdge = nan(Nobst,2);
-    thetaOFEdge = nan(Nobst,1);
-    xyOFEdge = nan(Nobst,2);
-    bodyXYOFEdge = nan(Nobst,2);
-    thetaOREdge = nan(Nobst,1);
-    xyOREdge = nan(Nobst,2);
-    bodyXYOREdge = nan(Nobst,2);
+    % Pre-allocate matrices to store collision locations
+    Nvertices = size(xobst,1);
+    thetaValues = nan(Nvertices,7);
     
-    for vertexInd = 1:Nobst
-        % First, determine if the vertex will collide with the front of the car
-        if vertexRadii(vertexInd) <= RoutsideAbs && vertexRadii(vertexInd) >= RinsideAbs
-            % Calculate based on the front of the car
-            thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*asin(vehicle.df/vertexRadii(vertexInd));
-            thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-            bodyXYVertex(vertexInd,:) = [vehicle.df R - vertexRadii(vertexInd)];
-        elseif vertexRadii(vertexInd) <= RmaxAbs && vertexRadii(vertexInd) >= RminAbs
-            % Calculate based on the sides of the car
-            if vertexRadii(vertexInd) <= RinsideAbs && vertexRadii(vertexInd) >= RminAbs
-                % Calculate based on the inside of the car. The nearest point
-                % is alongside the CG, so the collision will always happen
-                % ahead of the CG.
-                alphaa = sqrt(vertexRadii(vertexInd)^2 - (Rabs-vehicle.w/2)^2);
-                % Adjust the angle by the computed distance ahead of the CG.
-                thetaVertex(vertexInd) = vertexAngles(vertexInd) - sign(R)*atan(alphaa/(Rabs-vehicle.w/2));
-                thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-                bodyXYVertex(vertexInd,:) = [alphaa vehicle.w/2];
-            else
-                % Calculate based on the outside of the car. If the object
-                % cleared the front, it will only hit behind the CG.
-                alphab = sqrt(vertexRadii(vertexInd)^2 - (Rabs+vehicle.w/2)^2);
-                % Adjust the angle by the computed distance behind the CG.
-                thetaVertex(vertexInd) = vertexAngles(vertexInd) + sign(R)*atan(alphab/(Rabs+vehicle.w/2));
-                thetaVertex(vertexInd) = rerangeAngles(thetaVertex(vertexInd));
-                bodyXYVertex(vertexInd,:) = [-alphab vehicle.w/2];
-            end
-        end
+    %thetaLeftFrontCorner = nan(Nvertices,1);
+    xyLeftFrontCorner = nan(Nvertices,2);
+    bodyXYLeftFrontCorner = nan(Nvertices,2);
+    %thetaRightFrontCorner = nan(Nvertices,1);
+    xyRightFrontCorner = nan(Nvertices,2);
+    bodyXYRightFrontCorner = nan(Nvertices,2);
+    %thetaLeftRearCorner = nan(Nvertices,1);
+    xyLeftRearCorner = nan(Nvertices,2);
+    bodyXYLeftRearCorner = nan(Nvertices,2);
+    %thetaRightFrontCorner = nan(Nvertices,1);
+    xyRightRearCorner = nan(Nvertices,2);
+    bodyXYRightRearCorner = nan(Nvertices,2);
+    %thetaLeftSide = nan(Nvertices,1);
+    xyLeftSide = nan(Nvertices,2);
+    bodyXYLeftSide = nan(Nvertices,2);
+    %thetaRightSide = nan(Nvertices,1);
+    xyRightSide = nan(Nvertices,2);
+    bodyXYRightSide = nan(Nvertices,2);
+    %thetaFront = nan(Nvertices,1);
+    xyFront = nan(Nvertices,2);
+    bodyXYFront = nan(Nvertices,2);
+    
+    % Loop through each of the object vertices and associated edges,
+    % checking for intersections with the vehicle vertices and edges
+    for vertexInd = 1:Nvertices
         % Determine the index of the next vertex to define edges
-        nextVertex = mod(vertexInd,Nobst)+1;
-        
-        % Next, check all of the obstacle edges for "spanning" edges where
-        % one or both vertices of the convex hull are outside of the
-        % trajectory but the object actually lies across the trajectory.
-        
-        % Check for intersections with the front of the vehicle
+        nextVertex = mod(vertexInd,Nvertices)+1;
+        % Determine the endpoints of the object edge to be checked
         pa = [xobst(vertexInd) yobst(vertexInd)];
         pb = [xobst(nextVertex) yobst(nextVertex)];
         
-        % Compute the alpha associated with the min radius
-        alpha = -((pa(1)-pc(1))*(pb(1)-pa(1)) + (pa(2)-pc(2))*(pb(2)-pa(2)))/((pb(1)-pa(1))^2 + (pb(2)-pa(2))^2);
-        % Bound alpha between 0 and 1;
-        % alpha = max(0,min(alpha,1));
-        
-        % Check to see if there is a segment that spans the outer radius
-        if(vertexRadii(vertexInd) > RmaxAbs && vertexRadii(nextVertex) > RmaxAbs && alpha > 0 && alpha < 1)
-            % Handle this case, somehow. Best guess is to somehow divide
-            % the segment into two and use the existing code. However, this
-            % requires either dividing the segment before this inside loop
-            % or shifting the vertices and getting the 'for' loop to expand
-            % the number of iterations accordingly
-            pd(1) = pa(1) + alpha*(pb(1)-pa(1));
-            pd(2) = pa(2) + alpha*(pb(2)-pa(2));
-            RsegmentMin = sqrt((pd(1)-pc(1))^2 + (pd(2)-pc(2))^2);
-            % If the resulting minimum radius is less than the outer radius
-            % of the vehicle path, the edge spans (since the end points are
-            % outside based on the outer conditional)
-            if RsegmentMin < RmaxAbs
-                % Split the edge into two parts and test both of them for
-                % intersections with the outer circle
-                [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RoutsideAbs);
-                [thetaOFTest,xyOFTest] = intersectEdgeWithCircle(pb,pd,pc,RoutsideAbs);
-                if thetaOFTest < thetaOFEdge(vertexInd)
-                    thetaOFEdge(vertexInd) = thetaOFTest;
-                    xyOFEdge(vertexInd,:) = xyOFTest;
-                end
-                thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.df/RoutsideAbs);
-                bodyXYOFEdge(vertexInd,:) = [vehicle.df vehicle.w/2];
-                % Split the edge into two parts and test both of them for
-                % intersections with the outer circle
-                [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pd,pc,RmaxAbs);
-                [thetaORTest,xyORTest] = intersectEdgeWithCircle(pb,pd,pc,RmaxAbs);
-                if thetaORTest < thetaOREdge(vertexInd)
-                    thetaOREdge(vertexInd) = thetaORTest;
-                    xyOREdge(vertexInd,:) = xyORTest;
-                end
-                thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.dr/RmaxAbs);
-                bodyXYOREdge(vertexInd,:) = [-vehicle.dr vehicle.w/2];
+        %%%%% Section 1: vehicle vertex to object edge checks %%%%%
+        % If the left front corner of the vehicle is exposed
+        if flag_check_left_side || flag_check_left_tangent
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_LF);
+            if 0 < size(intersectionAngles,1)
+                bodyXYLeftFrontCorner(vertexInd,:) = [vehicle.df vehicle.w/2];
+                thetaLeftFrontStart = atan2(vehicleBB(LF,Y)-pc(Y),vehicleBB(LF,X)-pc(X));
+                [~,minInd] = min(intersectionAngles);
+                thetaValues(vertexInd,LF) = intersectionAngles(minInd) - thetaLeftFrontStart;
+                xyLeftFrontCorner(vertexInd,:) = intersectionPoint(minInd,:);
             end
-        else
-            [thetaOFEdge(vertexInd),xyOFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RoutsideAbs);
-            thetaOFEdge(vertexInd) = thetaOFEdge(vertexInd) - sign(R)*asin(vehicle.df/RoutsideAbs);
-            bodyXYOFEdge(vertexInd,:) = [vehicle.df vehicle.w/2];
-            [thetaOREdge(vertexInd),xyOREdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RmaxAbs);
-            thetaOREdge(vertexInd) = thetaOREdge(vertexInd) + sign(R)*asin(vehicle.dr/RmaxAbs);
-            bodyXYOREdge(vertexInd,:) = [-vehicle.dr vehicle.w/2];
         end
-        [thetaIFEdge(vertexInd),xyIFEdge(vertexInd,:)] = intersectEdgeWithCircle(pa,pb,pc,RinsideAbs);
-        thetaIFEdge(vertexInd) = thetaIFEdge(vertexInd) - sign(R)*asin(vehicle.df/RinsideAbs);
-        bodyXYIFEdge(vertexInd,:) = [vehicle.df -vehicle.w/2];
+        % If the right front corner of the vehicle is exposed
+        if flag_check_right_side || flag_check_right_tangent
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_RF);
+            if 0 < size(intersectionAngles,1)
+                bodyXYRightFrontCorner(vertexInd,:) = [vehicle.df -vehicle.w/2];
+                thetaRightRearStart = atan2(vehicleBB(RF,Y)-pc(Y),vehicleBB(RF,X)-pc(X));
+                [~,minInd] = min(intersectionAngles);
+                thetaValues(vertexInd,RF) = intersectionAngles(minInd) - thetaRightRearStart;
+                xyRightFrontCorner(vertexInd,:) = intersectionPoint(minInd,:);
+            end
+        end
+        % If the left rear corner of the vehicle is exposed
+        if flag_check_left_side
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_LR);
+            if 0 < size(intersectionAngles,1)
+                bodyXYLeftRearCorner(vertexInd,:) = [-vehicle.dr vehicle.w/2];
+                thetaLeftRearStart = atan2(vehicleBB(LR,Y)-pc(Y),vehicleBB(LR,X)-pc(X));
+                [~,minInd] = min(intersectionAngles);
+                thetaValues(vertexInd,LR) = intersectionAngles(minInd) - thetaLeftRearStart;
+                xyLeftRearCorner(vertexInd,:) = intersectionPoint(minInd,:);
+            end
+        end
+        % If the right rear corner of the vehicle is exposed
+        if flag_check_right_side
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_RR);
+            if 0 < size(intersectionAngles,1)
+                bodyXYRightRearCorner(vertexInd,:) = [-vehicle.dr -vehicle.w/2];
+                thetaRightRearStart = atan2(vehicleBB(RR,Y)-pc(Y),vehicleBB(RR,X)-pc(X));
+                [~,minInd] = min(intersectionAngles);
+                thetaValues(vertexInd,RR) = intersectionAngles(minInd) - thetaRightRearStart;
+                xyRightRearCorner(vertexInd,:) = intersectionPoint(minInd,:);
+            end
+        end
         
+        %%%%% Section 2: object vertex to vehicle edge checks %%%%%
+        
+        % First check to see if the vertex falls into the vehicle
+        % trajectory at all
+        if vertexRadii(vertexInd) > Rmin && vertexRadii(vertexInd) < Rmax
+            % Next, see if the left side of the vehicle is exposed
+            if flag_check_left_side || flag_check_left_tangent
+                if vertexRadii(vertexInd) < R_LF
+                    % vertex has an intersection with the left side of the
+                    % vehicle
+                    if flag_check_left_tangent
+                        % vertex has an intersection ahead of the tangent
+                        % point
+                        [thetaOffset,~] = ...
+                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
+                    else
+                        % vertex has an intersection ahead of the LR vertex
+                        [thetaOffset,~] = ...
+                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LR,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
+                    end
+                    if ~isempty(thetaOffset)
+                        thetaValues(vertexInd,5) = vertexAngles(vertexInd)-thetaOffset;
+                        xyLeftSide(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
+                    end
+                    % CEB: Need to determine the body xy coordinates for
+                    % these cases
+                end
+            end
+            % Next, see if the left side of the vehicle is exposed
+            if flag_check_right_side || flag_check_right_tangent
+                if vertexRadii(vertexInd) > R_RF
+                    % vertex has an intersection with the right side of the
+                    % vehicle
+                    if flag_check_right_tangent
+                        % vertex has an intersection ahead of the tangent
+                        % point
+                        [thetaOffset,~] = ...
+                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
+                    else
+                        % vertex has an intersection ahead of the RR vertex
+                        [thetaOffset,~] = ...
+                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(RR,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
+                    end
+                    if ~isempty(thetaOffset)
+                        thetaValues(vertexInd,6) = vertexAngles(vertexInd)-thetaOffset;
+                        xyRightSide(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
+                    end
+                    % CEB: Need to determine the body xy coordinates for
+                    % these cases
+                end
+            end
+            % Finally, check the front of the vehicle
+            if vertexRadii(vertexInd) >= R_LF && vertexRadii(vertexInd) <= R_RF
+                % vertex has an intersection with the front of the vehicle
+                [thetaOffset,~] = fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LF,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
+                thetaValues(vertexInd,7) = vertexAngles(vertexInd)-thetaOffset;
+                xyFront(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
+                % CEB: Need to determine the body xy coordinates for this
+                % case
+            end
+        end
     end
+    
+    %%%%% Section 3: first collision selection, or clearance calc %%%%%
+    
     % Check for a case where no intersections were calculated
-    if all([isnan(thetaVertex); isnan(thetaIFEdge); isnan(thetaOFEdge); isnan(thetaOREdge)])
+    if all(isnan(thetaValues),'all')
         collFlag(patchInd) = 0;
         
         % Determine the nearest two vertices
-        [nearestOuterClearance,nearestOuters] = mink(min(inf(Nobst,1),vertexRadii - RmaxAbs),2);
-        [nearestInnerClearance,nearestInners] = mink(min(inf(Nobst,1),RminAbs - vertexRadii),2);
+        [nearestOuterClearance,nearestOuters] = mink(min(inf(Nvertices,1),vertexRadii - abs(Rmax)),2);
+        [nearestInnerClearance,nearestInners] = mink(min(inf(Nvertices,1),abs(Rmin) - vertexRadii),2);
         if max(0,nearestOuterClearance) > max(nearestInnerClearance)
             pa = [xobst(nearestOuters(1)) yobst(nearestOuters(1))];
             pb = [xobst(nearestOuters(2)) yobst(nearestOuters(2))];
-            theta_offset = sign(R)*asin(vehicle.dr/Rabs);
+            theta_offset = sign(R)*asin(vehicle.dr/abs(R));
             % Compute the alpha associated with the min radius
             alpha = -((pa(1)-pc(1))*(pb(1)-pa(1)) + (pa(2)-pc(2))*(pb(2)-pa(2)))/((pb(1)-pa(1))^2 + (pb(2)-pa(2))^2);
             % Check to see if the minimum clearance is along the edge between
@@ -332,151 +410,78 @@ for patchInd = 1:Npatches
         end
         angle(patchInd) = atan2(location(patchInd,2)-pc(2),location(patchInd,1)-pc(1)) + theta_offset;
         if R >= 0
-            time(patchInd) = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
+            time(patchInd) = rerangeAngles(angle(patchInd) - h0 + pi/2)*abs(R)/v0;
         else
-            time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
+            time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*abs(R)/v0;
         end
         % No collision, so no body collision location
         bodyLoc(patchInd,:) = [NaN NaN];
         
         % Now, find the minimum angular location for the patch object in the
         % vehicle travel direction (indicated by the sign of R)
-    elseif R >= 0
-        collFlag(patchInd) = 1;
-        travelOffset = -h0 + pi/2;
-        [minVertex,minVertexInd] = nanmin(rerangeAngles(thetaVertex+travelOffset));
-        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(thetaIFEdge+travelOffset));
-        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(thetaOFEdge+travelOffset));
-        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(thetaOREdge+travelOffset));
-        if isnan(minVertex)
-            minVertex = inf;
-        end
-        if isnan(minIFEdge)
-            minIFEdge = inf;
-        end
-        if isnan(minOFEdge)
-            minOFEdge = inf;
-        end
-        if isnan(minOREdge)
-            minOREdge = inf;
-        end
-        if minVertex < minIFEdge && minVertex < minOFEdge && minVertex < minOREdge
-            angle(patchInd) = thetaVertex(minVertexInd);
-            location(patchInd,:) = [xobst(minVertexInd) yobst(minVertexInd)];
-            bodyLoc(patchInd,:) = bodyXYVertex(minVertexInd,:);
-        elseif minIFEdge < minVertex && minIFEdge < minOFEdge && minIFEdge < minOREdge
-            angle(patchInd) = thetaIFEdge(minIFEdgeInd);
-            location(patchInd,:) = [xyIFEdge(minIFEdgeInd,1) xyIFEdge(minIFEdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYIFEdge(minIFEdgeInd,:);
-        elseif minOFEdge < minVertex && minOFEdge < minIFEdge && minOFEdge < minOREdge
-            angle(patchInd) = thetaOFEdge(minOFEdgeInd);
-            location(patchInd,:) = [xyOFEdge(minOFEdgeInd,1) xyOFEdge(minOFEdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYOFEdge(minOFEdgeInd,:);
-        else
-            angle(patchInd) = thetaOREdge(minOREdgeInd);
-            location(patchInd,:) = [xyOREdge(minOREdgeInd,1) xyOREdge(minOREdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYOREdge(minOREdgeInd,:);
-        end
-        % With the location set, determine the time required to reach the
-        % location
-        time(patchInd) = rerangeAngles(angle(patchInd) - h0 + pi/2)*Rabs/v0;
     else
-        collFlag(patchInd) = 1;
-        % Shift the angles into the negative range for comparison with the
-        % max function (this isn't correct)
-        travelOffset = h0 + pi/2;
-        [minVertex,minVertexInd] = nanmin(rerangeAngles(travelOffset - thetaVertex));
-        [minIFEdge,minIFEdgeInd] = nanmin(rerangeAngles(travelOffset - thetaIFEdge));
-        [minOFEdge,minOFEdgeInd] = nanmin(rerangeAngles(travelOffset - thetaOFEdge));
-        [minOREdge,minOREdgeInd] = nanmin(rerangeAngles(travelOffset - thetaOREdge));
-        if isnan(minVertex)
-            minVertex = inf;
-        end
-        if isnan(minIFEdge)
-            minIFEdge = inf;
-        end
-        if isnan(minOFEdge)
-            minOFEdge = inf;
-        end
-        if isnan(minOREdge)
-            minOREdge = inf;
-        end
-        if minVertex < minIFEdge && minVertex < minOFEdge && minVertex < minOREdge
-            angle(patchInd) = thetaVertex(minVertexInd);
-            location(patchInd,:) = [xobst(minVertexInd) yobst(minVertexInd)];
-            bodyLoc(patchInd,:) = bodyXYVertex(minVertexInd,:);
-        elseif minIFEdge < minVertex && minIFEdge < minOFEdge && minIFEdge < minOREdge
-            angle(patchInd) = thetaIFEdge(minIFEdgeInd);
-            location(patchInd,:) = [xyIFEdge(minIFEdgeInd,1) xyIFEdge(minIFEdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYIFEdge(minIFEdgeInd,:);
-        elseif minOFEdge < minVertex && minOFEdge < minIFEdge && minOFEdge < minOREdge
-            angle(patchInd) = thetaOFEdge(minOFEdgeInd);
-            location(patchInd,:) = [xyOFEdge(minOFEdgeInd,1) xyOFEdge(minOFEdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYOFEdge(minOFEdgeInd,:);
+        if R >= 0
+            collFlag(patchInd) = 1;
+            % Find the index with the minimum angle in each dimension. Then,
+            % that identifies the single case which yields the nearest
+            % collision. Pull the data appropriately.
+            thetaValues = rerangeAngles(thetaValues);
+            [minVals,idx] = nanmin(thetaValues);
+            [~,idy] = nanmin(minVals);
+            idx = idx(idy);
         else
-            angle(patchInd) = thetaOREdge(minOREdgeInd);
-            location(patchInd,:) = [xyOREdge(minOREdgeInd,1) xyOREdge(minOREdgeInd,2)];
-            bodyLoc(patchInd,:) = bodyXYOREdge(minOREdgeInd,:);
+            collFlag(patchInd) = 1;
+            % Find the index with the minimum angle in each dimension. Then,
+            % that identifies the single case which yields the nearest
+            % collision. Pull the data appropriately.
+            thetaValues = rerangeAngles(2*pi-thetaValues);
+            [minVals,idx] = nanmin(thetaValues);
+            [~,idy] = nanmin(minVals);
+            idx = idx(idy);
         end
+        
+        % Use the indices of the smallest angle value to pull the correct
+        % collision location data for output
+        angle(patchInd) = thetaValues(idx,idy);
+        
+        switch(idy)
+            case LF
+                location(patchInd,:) = xyLeftFrontCorner(idx,:);
+                bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(idx,:);
+            case RF
+                location(patchInd,:) = xyRightFrontCorner(idx,:);
+                bodyLoc(patchInd,:) = bodyXYRightFrontCorner(idx,:);
+            case RR
+                location(patchInd,:) = xyRightRearCorner(idx,:);
+                bodyLoc(patchInd,:) = bodyXYRightRearCorner(idx,:);
+            case LR
+                location(patchInd,:) = xyLeftRearCorner(idx,:);
+                bodyLoc(patchInd,:) = bodyXYLeftRearCorner(idx,:);
+            case 5
+                location(patchInd,:) = xyLeftSide(idx,:);
+                bodyLoc(patchInd,:) = bodyXYLeftSide(idx,:);
+            case 6
+                location(patchInd,:) = xyRightSide(idx,1);
+                bodyLoc(patchInd,:) = bodyXYRightSide(idx,:);
+            case 7
+                location(patchInd,:) = xyFront(idx,:);
+                bodyLoc(patchInd,:) = bodyXYFront(idx,:);
+        end
+        
         % With the location set, determine the time required to reach the
         % location
-        time(patchInd) = rerangeAngles(h0 + pi/2 - angle(patchInd))*Rabs/v0;
-        clearance(patchInd) = NaN;
+        time(patchInd) = (angle(patchInd) - h0 + pi/2)*abs(R)/v0;
     end
 end
-
 end
 
 % Function to re-range angles between 0 and 2*pi
 function outAngles = rerangeAngles(inAngles)
 outAngles = inAngles;
-while any(outAngles > 2*pi)
+while any(outAngles > 2*pi,'all')
     outAngles(outAngles > 2*pi) = outAngles(outAngles > 2*pi) - 2*pi;
 end
-while any(outAngles < 0)
+while any(outAngles < 0,'all')
     outAngles(outAngles < 0) = outAngles(outAngles < 0) + 2*pi;
-end
-end
-
-% Function to intersect an edge defined as the segment between two points
-% pa->[x y] and pb->[x y] with a circle of radius R and centered at point
-% pc->[x y]. The return values are the angle of intersection and the point
-% pint->[x y] where the intersection occurs. This does not handle cases
-% where the edge could be larger than the circle itself and thus have two
-% intersections
-function [intAngle,intPoint] = intersectEdgeWithCircle(pa,pb,pc,R)
-% First check to see if an intersection is possible
-Rabs = abs(R);
-if (norm(pa-pc) < Rabs && norm(pb-pc) < Rabs) || (norm(pa-pc) > Rabs && norm(pb-pc) > Rabs)
-    % If no intersection (or two intersections) possible, return NaNs
-    intAngle = NaN;
-    intPoint = [NaN NaN];
-else
-    % Calculate the coefficients of the quadratic equation for alpha
-    % (the scalar distance along the line segment)
-    quadCoefs(1) = (pb(1) - pa(1))^2 + (pb(2) - pa(2))^2;
-    quadCoefs(2) = 2*((pa(1)-pc(1))*(pb(1) - pa(1)) + (pa(2)-pc(2))*(pb(2) - pa(2)));
-    quadCoefs(3) = (pa(1)-pc(1))^2 + (pa(2)-pc(2))^2 - R^2;
-    % Calculate the additive root for alpha
-    alpha = (-quadCoefs(2) + sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
-    % Check to see if the solution should come from the subtractive root
-    % and adjust if necessary
-    if alpha > 1
-        alpha = (-quadCoefs(2) - sqrt(quadCoefs(2)^2 - 4*quadCoefs(1)*quadCoefs(3)))/(2*quadCoefs(1));
-    end
-    % Confirm that we got a good solution. (This shouldn't fail with
-    % the previous logic, but it's here as extra validation.)
-    if alpha > 1 || alpha < 0
-        error('Calculation error, out of range');
-    end
-    % Calculate the associated circular angle of intersection from the
-    % scalar distance along the line segment (alpha)
-    intAngle = atan2(pa(2) + alpha*(pb(2)-pa(2)) - pc(2),...
-        pa(1) + alpha*(pb(1)-pa(1)) - pc(1));
-    % Normalize the range of the intersection angle to [0,2*pi]
-    intAngle = rerangeAngles(intAngle);
-    % Compute the actual point of intersection
-    intPoint(1) = pa(1) + alpha*(pb(1)-pa(1));
-    intPoint(2) = pa(2) + alpha*(pb(2)-pa(2));
 end
 end

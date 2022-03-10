@@ -10,25 +10,31 @@
 
 % Set the getNewData flag to 1 to set new obstacles by mouse clicking
 flag_getNewData = 0;
+flag_loadData = 0;
+
 % Clear existing data if new data is desired
-if 1 == flag_getNewData
-    clearvars
-    % Reset the flag for later use since clearvars will clear it
-    flag_getNewData = 1;
+if 1 == flag_getNewData || 1 == flag_loadData
+    clearvars -except flag*
+%     % Reset the flag for later use since clearvars will clear it
+%     flag_getNewData = 1;
+    if 1 == flag_loadData
+        load test_obstacle
+        flag_getNewData = 0;
+    end
 end
 
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
 R = 20;         % path radius (m) with sign (+ left, - right)
 p0 = [10,-5];     % initial position of vehicle (m,m)
-h0 = pi/2;     % initial heading of vehicle (rad)
-a0 = -15*pi/180; % vehicle body slip angle (rad)
+h0 = 3*pi/2;     % initial heading of vehicle (rad)
+a0 = 3*pi/180; % vehicle body slip angle (rad)
 tf = 1;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; a0; vx; R];
 % Vehicle dimensional information
 vehicle.dr = 2.2;       % CG-front bumper distance (m)
-vehicle.df = 10;        % CG-rear bumper distance (m)
+vehicle.df = 8;        % CG-rear bumper distance (m)
 vehicle.w = 2.0;        % vehicle width (m)
 
 % Plot the points
@@ -81,7 +87,7 @@ fprintf(1,"Min radius on the %s point, max radius on the %s point\n",...
 % Calculate the offset to the angular position based on the back end of the
 % vehicle (in order to plot the extra portion of the clearance curves)
 rear_offset = 1.1*sign(R)*atan2(-vehicle.dr,sign(R)*R+vehicle.w/2);
-theta_arcs = linspace(rear_offset,theta(end),100);
+theta_arcs = linspace(theta(1)+rear_offset,theta(end),100);
 plot(Rinside*cos(theta_arcs) + pc(1),Rinside*sin(theta_arcs) + pc(2),'-','color',[0.7 0.7 0.7]);
 plot(RoutsideFront*cos(theta_arcs) + pc(1),RoutsideFront*sin(theta_arcs) + pc(2),'-','color',[0.7 0.7 0.7]);
 plot(Rmin*cos(theta_arcs) + pc(1),Rmin*sin(theta_arcs) + pc(2),'r-');
@@ -92,14 +98,14 @@ plf = zeros(N,2);
 prf = zeros(N,2);
 plr = zeros(N,2);
 prr = zeros(N,2);
-plf(:,1) = pv(:,1) + vehicle.df*cos(theta+h0+a0) + vehicle.w/2*cos(theta+h0+a0+pi/2);
-plf(:,2) = pv(:,2) + vehicle.df*sin(theta+h0+a0) + vehicle.w/2*sin(theta+h0+a0+pi/2);
-prf(:,1) = pv(:,1) + vehicle.df*cos(theta+h0+a0) + vehicle.w/2*cos(theta+h0+a0-pi/2);
-prf(:,2) = pv(:,2) + vehicle.df*sin(theta+h0+a0) + vehicle.w/2*sin(theta+h0+a0-pi/2);
-plr(:,1) = pv(:,1) - vehicle.dr*cos(theta+h0+a0) + vehicle.w/2*cos(theta+h0+a0+pi/2);
-plr(:,2) = pv(:,2) - vehicle.dr*sin(theta+h0+a0) + vehicle.w/2*sin(theta+h0+a0+pi/2);
-prr(:,1) = pv(:,1) - vehicle.dr*cos(theta+h0+a0) + vehicle.w/2*cos(theta+h0+a0-pi/2);
-prr(:,2) = pv(:,2) - vehicle.dr*sin(theta+h0+a0) + vehicle.w/2*sin(theta+h0+a0-pi/2);
+plf(:,1) = pv(:,1) + vehicle.df*cos(theta+pi/2+a0) - vehicle.w/2*cos(theta+a0);
+plf(:,2) = pv(:,2) + vehicle.df*sin(theta+pi/2+a0) - vehicle.w/2*sin(theta+a0);
+prf(:,1) = pv(:,1) + vehicle.df*cos(theta+pi/2+a0) + vehicle.w/2*cos(theta+a0);
+prf(:,2) = pv(:,2) + vehicle.df*sin(theta+pi/2+a0) + vehicle.w/2*sin(theta+a0);
+prr(:,1) = pv(:,1) - vehicle.dr*cos(theta+pi/2+a0) + vehicle.w/2*cos(theta+a0);
+prr(:,2) = pv(:,2) - vehicle.dr*sin(theta+pi/2+a0) + vehicle.w/2*sin(theta+a0);
+plr(:,1) = pv(:,1) - vehicle.dr*cos(theta+pi/2+a0) - vehicle.w/2*cos(theta+a0);
+plr(:,2) = pv(:,2) - vehicle.dr*sin(theta+pi/2+a0) - vehicle.w/2*sin(theta+a0);
 % Plot a few vehicle outlines
 inds = 1;%;[1; floor(N/4); floor(N/2); floor(3*N/4)];%
 for i = 1:length(inds)
@@ -110,7 +116,7 @@ end
 
 %% Create some obstacles in the global coordinates
 if 1 == flag_getNewData
-    pause(); % Used for zooming the plot to create more accurate obstacles, if desired
+    %pause(); % Used for zooming the plot to create more accurate obstacles, if desired
     Nobstacles = 1;
     % Create an template obstacle structure array to fill
     obstacles = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
@@ -180,15 +186,18 @@ if 0 == initial_collision_flag
     frontEdgeOffset = sign(R)*pi/2;
     
     for collInd = 1:length(collFlags)
-        bodyLoc(1,1) = Rabs*cos(collAngle(collInd)) + pc(1) + vehicle.df*cos(collAngle(collInd)+frontEdgeOffset) - vehicle.w/2*cos(collAngle(collInd));
-        bodyLoc(1,2) = Rabs*sin(collAngle(collInd)) + pc(2) + vehicle.df*sin(collAngle(collInd)+frontEdgeOffset) - vehicle.w/2*sin(collAngle(collInd));
-        bodyLoc(2,1) = Rabs*cos(collAngle(collInd)) + pc(1) + vehicle.df*cos(collAngle(collInd)+frontEdgeOffset) + vehicle.w/2*cos(collAngle(collInd));
-        bodyLoc(2,2) = Rabs*sin(collAngle(collInd)) + pc(2) + vehicle.df*sin(collAngle(collInd)+frontEdgeOffset) + vehicle.w/2*sin(collAngle(collInd));
-        bodyLoc(3,1) = Rabs*cos(collAngle(collInd)) + pc(1) - vehicle.dr*cos(collAngle(collInd)+frontEdgeOffset) + vehicle.w/2*cos(collAngle(collInd));
-        bodyLoc(3,2) = Rabs*sin(collAngle(collInd)) + pc(2) - vehicle.dr*sin(collAngle(collInd)+frontEdgeOffset) + vehicle.w/2*sin(collAngle(collInd));
-        bodyLoc(4,1) = Rabs*cos(collAngle(collInd)) + pc(1) - vehicle.dr*cos(collAngle(collInd)+frontEdgeOffset) - vehicle.w/2*cos(collAngle(collInd));
-        bodyLoc(4,2) = Rabs*sin(collAngle(collInd)) + pc(2) - vehicle.dr*sin(collAngle(collInd)+frontEdgeOffset) - vehicle.w/2*sin(collAngle(collInd));
+        collAngle(collInd) = sign(R)*collAngle(collInd);
+        bodyLoc(1,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) + vehicle.df*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(1,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) + vehicle.df*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(2,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) + vehicle.df*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(2,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) + vehicle.df*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(3,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) - vehicle.dr*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(3,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) - vehicle.dr*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(4,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) - vehicle.dr*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
+        bodyLoc(4,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) - vehicle.dr*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
         plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
+        plot(R*cos(theta(1)+collAngle(collInd)) + pc(1),R*sin(theta(1)+collAngle(collInd)) + pc(2),'ko')
+        plot(R*cos(theta(1)+collAngle(collInd)) + pc(1),R*sin(theta(1)+collAngle(collInd)) + pc(2),'k+')
         
         % Plot the collision or closest clearance point
         plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
@@ -202,14 +211,14 @@ if 0 == initial_collision_flag
     
     [~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
     
-    % Create another copy of the figure
-    figure(1)
-    a1 = gca;
-    f2 = figure(2);
-    clf
-    a2 = copyobj(a1,f2);
-    figure(2)
-    axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
+%     % Create another copy of the figure
+%     figure(1)
+%     a1 = gca;
+%     f2 = figure(2);
+%     clf
+%     a2 = copyobj(a1,f2);
+%     figure(2)
+%     axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
     % Create a legend
     %legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
 end
