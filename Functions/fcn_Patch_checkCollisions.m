@@ -75,7 +75,7 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %       - collisions right after start points, hampered by determining
 %       which of the double intersections to treat
 
-flag_do_debug = 1; % Flag to plot the results for debugging
+flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
@@ -188,25 +188,25 @@ flag_check_right_side = 1; flag_check_right_tangent = 0;
 % if LF == radiiFlags(1) || LF == radiiFlags(2)
 %     flag_check_left_side = 0;
 % end
-if (R > 0 && IT == radiiFlags(1))
+if (R > 0 && IT == radiiFlags(1))  % Minimum radius is tangent to left side
     flag_check_left_tangent = 1;
     flag_check_left_side = 0;
 end
 % if RF == radiiFlags(1) || RF == radiiFlags(2)
 %     flag_check_right_side = 0;
 % end
-if (R < 0 && IT == radiiFlags(1))
+if (R < 0 && IT == radiiFlags(1)) % Minimum radius is tangent to right side
     flag_check_right_tangent = 1;
     flag_check_right_side = 0;
 end
-if flag_do_debug
-    if flag_check_left_side && flag_check_left_tangent
-        error('Bad combination of vehicle side checks (left side)')
-    end
-    if flag_check_right_side && flag_check_right_tangent
-        error('Bad combination of vehicle side checks (right side)')
-    end
-end
+% if flag_do_debug
+%     if flag_check_left_side && flag_check_left_tangent
+%         error('Bad combination of vehicle side checks (left side)')
+%     end
+%     if flag_check_right_side && flag_check_right_tangent
+%         error('Bad combination of vehicle side checks (right side)')
+%     end
+% end
 
 % Pre-allocate the results with negative numbers (not viable results) for
 % debugging purposes
@@ -230,29 +230,30 @@ for patchInd = 1:Npatches
     
     % Pre-allocate matrices to store collision locations
     Nvertices = size(xobst,1);
-    thetaValues = nan(Nvertices,7);
+    % There are 14 columns to store two potential intersections for each
+    % possible check: each of the four vehicle vertices to an object edge
+    % and an object vertex to each of the potentially exposed vehicle sides
+    % (left, right, front)
+    thetaValues = nan(Nvertices,14);
     
-    %thetaLeftFrontCorner = nan(Nvertices,1);
-    xyLeftFrontCorner = nan(Nvertices,2);
-    bodyXYLeftFrontCorner = nan(Nvertices,2);
-    %thetaRightFrontCorner = nan(Nvertices,1);
-    xyRightFrontCorner = nan(Nvertices,2);
-    bodyXYRightFrontCorner = nan(Nvertices,2);
-    %thetaLeftRearCorner = nan(Nvertices,1);
-    xyLeftRearCorner = nan(Nvertices,2);
-    bodyXYLeftRearCorner = nan(Nvertices,2);
-    %thetaRightFrontCorner = nan(Nvertices,1);
-    xyRightRearCorner = nan(Nvertices,2);
-    bodyXYRightRearCorner = nan(Nvertices,2);
-    %thetaLeftSide = nan(Nvertices,1);
-    xyLeftSide = nan(Nvertices,2);
-    bodyXYLeftSide = nan(Nvertices,2);
-    %thetaRightSide = nan(Nvertices,1);
-    xyRightSide = nan(Nvertices,2);
-    bodyXYRightSide = nan(Nvertices,2);
-    %thetaFront = nan(Nvertices,1);
-    xyFront = nan(Nvertices,2);
-    bodyXYFront = nan(Nvertices,2);
+    % Allocate space to store the intersection locations on the vehicle
+    % body and in inertial space. The corners of the vehicle are known, so
+    % set the values of those right away.
+    bodyXYLeftFrontCorner = [vehicle.df vehicle.w/2];
+    bodyXYRightFrontCorner = [vehicle.df -vehicle.w/2];
+    bodyXYRightRearCorner = [-vehicle.dr -vehicle.w/2];
+    bodyXYLeftRearCorner = [-vehicle.dr vehicle.w/2];
+    % Allocate the rest with NaN values that can be ignored if not filled
+    xyLeftFrontCorner = nan(Nvertices,4);
+    xyRightFrontCorner = nan(Nvertices,4);
+    xyRightRearCorner = nan(Nvertices,4);
+    xyLeftRearCorner = nan(Nvertices,4);
+    xyLeftSide = nan(Nvertices,4);
+    bodyXYLeftSide = nan(Nvertices,4);
+    xyRightSide = nan(Nvertices,4);
+    bodyXYRightSide = nan(Nvertices,4);
+    xyFront = nan(Nvertices,4);
+    bodyXYFront = nan(Nvertices,4);
     
     % Loop through each of the object vertices and associated edges,
     % checking for intersections with the vehicle vertices and edges
@@ -264,114 +265,134 @@ for patchInd = 1:Npatches
         pb = [xobst(nextVertex) yobst(nextVertex)];
         
         %%%%% Section 1: vehicle vertex to object edge checks %%%%%
-        % If the left front corner of the vehicle is exposed
-        if flag_check_left_side || flag_check_left_tangent
-            [intersectionAngles,intersectionPoint] = ...
-                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_LF);
-            if 0 < size(intersectionAngles,1)
-                bodyXYLeftFrontCorner(vertexInd,:) = [vehicle.df vehicle.w/2];
-                thetaLeftFrontStart = atan2(vehicleBB(LF,Y)-pc(Y),vehicleBB(LF,X)-pc(X));
-                [~,minInd] = min(intersectionAngles);
-                thetaValues(vertexInd,LF) = intersectionAngles(minInd) - thetaLeftFrontStart;
-                xyLeftFrontCorner(vertexInd,:) = intersectionPoint(minInd,:);
+        % Check the left front corner of the vehicle for intersections with
+        % obstacle edges
+        [intersectionAngles,intersectionPoint] = ...
+            fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_LF);
+        thetaLeftFrontStart = atan2(vehicleBB(LF,Y)-pc(Y),vehicleBB(LF,X)-pc(X));
+        for intIndex = 1:size(intersectionAngles,1)
+            thetaValues(vertexInd,2*(LF-1)+intIndex) = intersectionAngles(intIndex) - thetaLeftFrontStart;
+            xyLeftFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)) = intersectionPoint(intIndex,:);
+            if flag_do_debug
+                plot(xyLeftFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)),xyLeftFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)),'rd')
             end
         end
-        % If the right front corner of the vehicle is exposed
-        if flag_check_right_side || flag_check_right_tangent
-            [intersectionAngles,intersectionPoint] = ...
-                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_RF);
-            if 0 < size(intersectionAngles,1)
-                bodyXYRightFrontCorner(vertexInd,:) = [vehicle.df -vehicle.w/2];
-                thetaRightRearStart = atan2(vehicleBB(RF,Y)-pc(Y),vehicleBB(RF,X)-pc(X));
-                [~,minInd] = min(intersectionAngles);
-                thetaValues(vertexInd,RF) = intersectionAngles(minInd) - thetaRightRearStart;
-                xyRightFrontCorner(vertexInd,:) = intersectionPoint(minInd,:);
+        [intersectionAngles,intersectionPoint] = ...
+            fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_RF);
+        thetaRightFrontStart = atan2(vehicleBB(RF,Y)-pc(Y),vehicleBB(RF,X)-pc(X));
+        for intIndex = 1:size(intersectionAngles,1)
+            thetaValues(vertexInd,2*(RF-1)+intIndex) = intersectionAngles(intIndex) - thetaRightFrontStart;
+            xyRightFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)) = intersectionPoint(intIndex,:);
+            if flag_do_debug
+                plot(xyRightFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)),xyRightFrontCorner(vertexInd,(2*intIndex-1):(2*intIndex)),'bd')
             end
         end
-        % If the left rear corner of the vehicle is exposed
-        if flag_check_left_side
+        % If the left side is tangent to the minimum radius, check the
+        % tangent point against any obstacle edges. Otherwise, check the
+        % left rear point
+        if flag_check_left_tangent
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_IT);
+            thetaLeftRearStart = atan2(vehicleBB(5,Y)-pc(Y),vehicleBB(5,X)-pc(X));
+        else
             [intersectionAngles,intersectionPoint] = ...
                 fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_LR);
-            if 0 < size(intersectionAngles,1)
-                bodyXYLeftRearCorner(vertexInd,:) = [-vehicle.dr vehicle.w/2];
-                thetaLeftRearStart = atan2(vehicleBB(LR,Y)-pc(Y),vehicleBB(LR,X)-pc(X));
-                [~,minInd] = min(intersectionAngles);
-                thetaValues(vertexInd,LR) = intersectionAngles(minInd) - thetaLeftRearStart;
-                xyLeftRearCorner(vertexInd,:) = intersectionPoint(minInd,:);
+            thetaLeftRearStart = atan2(vehicleBB(LR,Y)-pc(Y),vehicleBB(LR,X)-pc(X));
+        end
+        for intIndex = 1:size(intersectionAngles,1)
+            thetaValues(vertexInd,2*(LR-1)+intIndex) = intersectionAngles(intIndex) - thetaLeftRearStart;
+            xyLeftRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)) = intersectionPoint(intIndex,:);
+            if flag_do_debug
+                plot(xyLeftRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)),xyLeftRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)),'bd')
             end
         end
-        % If the right rear corner of the vehicle is exposed
-        if flag_check_right_side
+        % If the right side is tangent to the minimum radius, check the
+        % tangent point against any obstacle edges. Otherwise, check the
+        % right rear point
+        if flag_check_right_tangent
+            [intersectionAngles,intersectionPoint] = ...
+                fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_IT);
+            thetaRightRearStart = atan2(vehicleBB(5,Y)-pc(Y),vehicleBB(5,X)-pc(X));
+        else
             [intersectionAngles,intersectionPoint] = ...
                 fcn_geometry_findIntersectionLineSegmentWithCircle(pa,pb,pc,R_RR);
-            if 0 < size(intersectionAngles,1)
-                bodyXYRightRearCorner(vertexInd,:) = [-vehicle.dr -vehicle.w/2];
-                thetaRightRearStart = atan2(vehicleBB(RR,Y)-pc(Y),vehicleBB(RR,X)-pc(X));
-                [~,minInd] = min(intersectionAngles);
-                thetaValues(vertexInd,RR) = intersectionAngles(minInd) - thetaRightRearStart;
-                xyRightRearCorner(vertexInd,:) = intersectionPoint(minInd,:);
+            thetaRightRearStart = atan2(vehicleBB(RR,Y)-pc(Y),vehicleBB(RR,X)-pc(X));
+        end
+        for intIndex = 1:size(intersectionAngles,1)
+            thetaValues(vertexInd,2*(RR-1)+intIndex) = intersectionAngles(intIndex) - thetaRightRearStart;
+            xyRightRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)) = intersectionPoint(intIndex,:);
+            if flag_do_debug
+                plot(xyRightRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)),xyRightRearCorner(vertexInd,(2*intIndex-1):(2*intIndex)),'bd')
             end
         end
+        
         
         %%%%% Section 2: object vertex to vehicle edge checks %%%%%
         
         % First check to see if the vertex falls into the vehicle
         % trajectory at all
         if vertexRadii(vertexInd) > Rmin && vertexRadii(vertexInd) < Rmax
-            % Next, see if the left side of the vehicle is exposed
-            if flag_check_left_side || flag_check_left_tangent
-                if vertexRadii(vertexInd) < R_LF
-                    % vertex has an intersection with the left side of the
-                    % vehicle
-                    if flag_check_left_tangent
-                        % vertex has an intersection ahead of the tangent
-                        % point
-                        [thetaOffset,~] = ...
-                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
-                    else
-                        % vertex has an intersection ahead of the LR vertex
-                        [thetaOffset,~] = ...
-                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LR,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
-                    end
-                    if ~isempty(thetaOffset)
-                        thetaValues(vertexInd,5) = vertexAngles(vertexInd)-thetaOffset;
-                        xyLeftSide(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
-                    end
-                    % CEB: Need to determine the body xy coordinates for
-                    % these cases
+            % Next, see if the left side of the vehicle has an intersection
+            if vertexRadii(vertexInd) < R_LF
+                % vertex has an intersection with the left side
+                if flag_check_left_tangent
+                    % vertex has an intersection ahead of the tangent
+                    % point
+                    [intersectionAngles,~] = ...
+                        fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
+                else
+                    % vertex has an intersection ahead of the LR vertex
+                    [intersectionAngles,~] = ...
+                        fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LR,:),vehicleBB(LF,:),pc,vertexRadii(vertexInd));
                 end
+                for intIndex = 1:size(intersectionAngles,1)
+                    thetaValues(vertexInd,8+intIndex) = vertexAngles(vertexInd)-intersectionAngles(intIndex);
+                    xyLeftSide(vertexInd,(2*intIndex-1):(2*intIndex)) = [xobst(vertexInd),yobst(vertexInd)];
+                    if flag_do_debug
+                        plot(xyLeftSide(vertexInd,(2*intIndex-1):(2*intIndex)),xyLeftSide(vertexInd,(2*intIndex-1):(2*intIndex)),'rs')
+                    end
+                end
+                % CEB: Need to determine the body xy coordinates for
+                % these cases
             end
-            % Next, see if the left side of the vehicle is exposed
-            if flag_check_right_side || flag_check_right_tangent
-                if vertexRadii(vertexInd) > R_RF
-                    % vertex has an intersection with the right side of the
-                    % vehicle
-                    if flag_check_right_tangent
-                        % vertex has an intersection ahead of the tangent
-                        % point
-                        [thetaOffset,~] = ...
-                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
-                    else
-                        % vertex has an intersection ahead of the RR vertex
-                        [thetaOffset,~] = ...
-                            fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(RR,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
-                    end
-                    if ~isempty(thetaOffset)
-                        thetaValues(vertexInd,6) = vertexAngles(vertexInd)-thetaOffset;
-                        xyRightSide(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
-                    end
-                    % CEB: Need to determine the body xy coordinates for
-                    % these cases
+            % Next, see if the right side of the vehicle is exposed
+            if vertexRadii(vertexInd) > R_RF
+                % vertex has an intersection with the right side of the
+                % vehicle
+                if flag_check_right_tangent
+                    % vertex has an intersection ahead of the tangent
+                    % point
+                    [intersectionAngles,~] = ...
+                        fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(IT,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
+                else
+                    % vertex has an intersection ahead of the RR vertex
+                    [intersectionAngles,~] = ...
+                        fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(RR,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
                 end
+                for intIndex = 1:size(intersectionAngles,1)
+                    thetaValues(vertexInd,10+intIndex) = vertexAngles(vertexInd)-intersectionAngles(intIndex);
+                    xyRightSide(vertexInd,(2*intIndex-1):(2*intIndex)) = [xobst(vertexInd),yobst(vertexInd)];
+                    if flag_do_debug
+                        plot(xyRightSide(vertexInd,(2*intIndex-1):(2*intIndex)),xyRightSide(vertexInd,(2*intIndex-1):(2*intIndex)),'bs')
+                    end
+                end
+                % CEB: Need to determine the body xy coordinates for
+                % these cases
             end
             % Finally, check the front of the vehicle
             if vertexRadii(vertexInd) >= R_LF && vertexRadii(vertexInd) <= R_RF
                 % vertex has an intersection with the front of the vehicle
-                [thetaOffset,~] = fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LF,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
-                thetaValues(vertexInd,7) = vertexAngles(vertexInd)-thetaOffset;
-                xyFront(vertexInd,:) = [xobst(vertexInd),yobst(vertexInd)];
-                % CEB: Need to determine the body xy coordinates for this
-                % case
+                [intersectionAngles,~] = ...
+                    fcn_geometry_findIntersectionLineSegmentWithCircle(vehicleBB(LF,:),vehicleBB(RF,:),pc,vertexRadii(vertexInd));
+                for intIndex = 1:size(intersectionAngles,1)
+                    thetaValues(vertexInd,12+intIndex-1) = vertexAngles(vertexInd)-intersectionAngles(intIndex);
+                    xyFront(vertexInd,(2*intIndex-1):(2*intIndex)) = [xobst(vertexInd),yobst(vertexInd)];
+                    if flag_do_debug
+                        plot(xyFront(vertexInd,(2*intIndex-1):(2*intIndex)),xyFront(vertexInd,(2*intIndex-1):(2*intIndex)),'gs')
+                    end
+                    % CEB: Need to determine the body xy coordinates for this
+                    % case
+                end
             end
         end
     end
@@ -445,32 +466,53 @@ for patchInd = 1:Npatches
         angle(patchInd) = thetaValues(idx,idy);
         
         switch(idy)
-            case LF
-                location(patchInd,:) = xyLeftFrontCorner(idx,:);
-                bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(idx,:);
-            case RF
-                location(patchInd,:) = xyRightFrontCorner(idx,:);
-                bodyLoc(patchInd,:) = bodyXYRightFrontCorner(idx,:);
-            case RR
-                location(patchInd,:) = xyRightRearCorner(idx,:);
-                bodyLoc(patchInd,:) = bodyXYRightRearCorner(idx,:);
-            case LR
-                location(patchInd,:) = xyLeftRearCorner(idx,:);
-                bodyLoc(patchInd,:) = bodyXYLeftRearCorner(idx,:);
+            case 1
+                location(patchInd,:) = xyLeftFrontCorner(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(1,1:2);
+            case 2
+                location(patchInd,:) = xyLeftFrontCorner(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(1,1:2);
+            case 3
+                location(patchInd,:) = xyRightFrontCorner(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYRightFrontCorner(1,1:2);
+            case 4
+                location(patchInd,:) = xyRightFrontCorner(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYRightFrontCorner(1,1:2);
             case 5
-                location(patchInd,:) = xyLeftSide(idx,:);
-                bodyLoc(patchInd,:) = bodyXYLeftSide(idx,:);
+                location(patchInd,:) = xyRightRearCorner(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYRightRearCorner(1,1:2);
             case 6
-                location(patchInd,:) = xyRightSide(idx,1);
-                bodyLoc(patchInd,:) = bodyXYRightSide(idx,:);
+                location(patchInd,:) = xyRightRearCorner(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYRightRearCorner(1,1:2);
             case 7
-                location(patchInd,:) = xyFront(idx,:);
-                bodyLoc(patchInd,:) = bodyXYFront(idx,:);
+                location(patchInd,:) = xyLeftRearCorner(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYLeftRearCorner(1,1:2);
+            case 8
+                location(patchInd,:) = xyLeftRearCorner(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYLeftRearCorner(1,1:2);
+            case 9
+                location(patchInd,:) = xyLeftSide(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYLeftSide(idx,1:2);
+            case 10
+                location(patchInd,:) = xyLeftSide(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYLeftSide(idx,3:4);
+            case 11
+                location(patchInd,:) = xyRightSide(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYRightSide(idx,1:2);
+            case 12
+                location(patchInd,:) = xyRightSide(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYRightSide(idx,3:4);
+            case 13
+                location(patchInd,:) = xyFront(idx,1:2);
+                bodyLoc(patchInd,:) = bodyXYFront(idx,1:2);
+            case 14
+                location(patchInd,:) = xyFront(idx,3:4);
+                bodyLoc(patchInd,:) = bodyXYFront(idx,3:4);
         end
         
         % With the location set, determine the time required to reach the
         % location
-        time(patchInd) = (angle(patchInd) - h0 + pi/2)*abs(R)/v0;
+        time(patchInd) = angle(patchInd)/v0;
     end
 end
 end

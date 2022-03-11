@@ -9,8 +9,10 @@
 % center point, etc.
 
 % Set the getNewData flag to 1 to set new obstacles by mouse clicking
-flag_getNewData = 0;
+flag_getNewData = 1;
 flag_loadData = 0;
+
+addpath('~/Documents/MATLAB/PSU_GeometryLib/Functions/')
 
 % Clear existing data if new data is desired
 if 1 == flag_getNewData || 1 == flag_loadData
@@ -23,13 +25,16 @@ if 1 == flag_getNewData || 1 == flag_loadData
     end
 end
 
+% Enumerate the body positions and directions
+LF = 1; RF = 2; RR = 3; LR = 4; X = 1; Y = 2;
+
 % Vehicle trajectory information
 vx = 20;        % longitudinal speed (m/s)
-R = 20;         % path radius (m) with sign (+ left, - right)
+R = 15;         % path radius (m) with sign (+ left, - right)
 p0 = [10,-5];     % initial position of vehicle (m,m)
-h0 = 3*pi/2;     % initial heading of vehicle (rad)
-a0 = 3*pi/180; % vehicle body slip angle (rad)
-tf = 1;         % time horizon to check (s)
+h0 = pi/2;     % initial heading of vehicle (rad)
+a0 = 15*pi/180; % vehicle body slip angle (rad)
+tf = 1.9*pi*abs(R)/vx;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; a0; vx; R];
 % Vehicle dimensional information
@@ -65,7 +70,7 @@ pv(:,2) = R*sin(theta) + pc(2);
 plot(pv(:,1),pv(:,2),'k-.')
 
 % Calculate the various pertinent radii and corner points of the vehicle
-[radii,boundPoints,radiiFlags] = fcn_Patch_CalcCircularTrajectoryGeometry(x0,vehicle);
+[radii,vehicleBB,radiiFlags] = fcn_Patch_CalcCircularTrajectoryGeometry(x0,vehicle);
 
 % Parse out which radii are which
 Rinside = sign(R)*radii(1);
@@ -93,28 +98,10 @@ plot(RoutsideFront*cos(theta_arcs) + pc(1),RoutsideFront*sin(theta_arcs) + pc(2)
 plot(Rmin*cos(theta_arcs) + pc(1),Rmin*sin(theta_arcs) + pc(2),'r-');
 plot(Rmax*cos(theta_arcs) + pc(1),Rmax*sin(theta_arcs) + pc(2),'b-');
 
-% Now determine where the corners of the vehicle are at each moment
-plf = zeros(N,2);
-prf = zeros(N,2);
-plr = zeros(N,2);
-prr = zeros(N,2);
-plf(:,1) = pv(:,1) + vehicle.df*cos(theta+pi/2+a0) - vehicle.w/2*cos(theta+a0);
-plf(:,2) = pv(:,2) + vehicle.df*sin(theta+pi/2+a0) - vehicle.w/2*sin(theta+a0);
-prf(:,1) = pv(:,1) + vehicle.df*cos(theta+pi/2+a0) + vehicle.w/2*cos(theta+a0);
-prf(:,2) = pv(:,2) + vehicle.df*sin(theta+pi/2+a0) + vehicle.w/2*sin(theta+a0);
-prr(:,1) = pv(:,1) - vehicle.dr*cos(theta+pi/2+a0) + vehicle.w/2*cos(theta+a0);
-prr(:,2) = pv(:,2) - vehicle.dr*sin(theta+pi/2+a0) + vehicle.w/2*sin(theta+a0);
-plr(:,1) = pv(:,1) - vehicle.dr*cos(theta+pi/2+a0) - vehicle.w/2*cos(theta+a0);
-plr(:,2) = pv(:,2) - vehicle.dr*sin(theta+pi/2+a0) - vehicle.w/2*sin(theta+a0);
-% Plot a few vehicle outlines
-inds = 1;%;[1; floor(N/4); floor(N/2); floor(3*N/4)];%
-for i = 1:length(inds)
-    plot(pv(inds(i),1),pv(inds(i),2),'ko')
-    plot([plf(inds(i),1) prf(inds(i),1) prr(inds(i),1) plr(inds(i),1) plf(inds(i),1)],...
-        [plf(inds(i),2) prf(inds(i),2) prr(inds(i),2) plr(inds(i),2) plf(inds(i),2)],'k');
-end
+% Plot the initial vehicle location
+plotVehicleBB(p0,h0+a0,vehicle,1)
 
-%% Create some obstacles in the global coordinates
+% Create some obstacles in the global coordinates
 if 1 == flag_getNewData
     %pause(); % Used for zooming the plot to create more accurate obstacles, if desired
     Nobstacles = 1;
@@ -141,14 +128,12 @@ axis auto
 
 % Set a flag that will be set if any of the obstacles yield a collision
 initial_collision_flag = 0;
-% Define the bounding box of the car at the initial time
-carBoundBox = [plf(1,:); prf(1,:); prr(1,:); plr(1,:); plf(1,:)];
 
 % Loop through each obstacle, checking for collisions with the vehicle
 for obstacleInd = 1:Nobstacles
-    % Use the polyxpoly function to check for overlaps between the car and
-    % obstacle polyshapes
-    [XI,YI] = polyxpoly(carBoundBox(:,1),carBoundBox(:,2),obstacles(obstacleInd).pointsX([1:end 1]),obstacles(obstacleInd).pointsY([1:end 1]));
+    % Use the polyxpoly function to check for overlaps between the car
+    % bounding box and obstacle polyshapes
+    [XI,YI] = polyxpoly(vehicleBB([1:end 1],X),vehicleBB([1:end 1],Y),obstacles(obstacleInd).pointsX([1:end 1]),obstacles(obstacleInd).pointsY([1:end 1]));
     
     % If there are entries in the intersection vectors, there is a
     % collision. Checking XI only since XI and YI are the same size.
@@ -159,7 +144,7 @@ for obstacleInd = 1:Nobstacles
         % Output the collision notification
         fprintf(1,'Vehicle initial position is in conflict with obstacle %d.\n',obstacleInd);
         % Determine the overlap between the vehicle and obstacle
-        collisionPoly = intersect(polyshape(carBoundBox(:,1),carBoundBox(:,2)),polyshape(obstacles(obstacleInd).pointsX([1:end 1]),obstacles(obstacleInd).pointsY([1:end 1])));
+        collisionPoly = intersect(polyshape(vehicleBB([1:end 1],X),vehicleBB([1:end 1],Y)),polyshape(obstacles(obstacleInd).pointsX([1:end 1]),obstacles(obstacleInd).pointsY([1:end 1])));
         % Plot the overlapped region in red for the user's review
         plot(collisionPoly,'facecolor','red')
     end
@@ -184,20 +169,13 @@ if 0 == initial_collision_flag
     % Plot the car body
     Rabs = abs(R);
     frontEdgeOffset = sign(R)*pi/2;
-    
+  %%  
     for collInd = 1:length(collFlags)
-        collAngle(collInd) = sign(R)*collAngle(collInd);
-        bodyLoc(1,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) + vehicle.df*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(1,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) + vehicle.df*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(2,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) + vehicle.df*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(2,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) + vehicle.df*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(3,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) - vehicle.dr*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(3,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) - vehicle.dr*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) + vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(4,1) = R*cos(theta(1)+collAngle(collInd)) + pc(1) - vehicle.dr*cos(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*cos(theta(1)+collAngle(collInd)+a0);
-        bodyLoc(4,2) = R*sin(theta(1)+collAngle(collInd)) + pc(2) - vehicle.dr*sin(theta(1)+collAngle(collInd)+frontEdgeOffset+a0) - vehicle.w/2*sin(theta(1)+collAngle(collInd)+a0);
-        plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
-        plot(R*cos(theta(1)+collAngle(collInd)) + pc(1),R*sin(theta(1)+collAngle(collInd)) + pc(2),'ko')
-        plot(R*cos(theta(1)+collAngle(collInd)) + pc(1),R*sin(theta(1)+collAngle(collInd)) + pc(2),'k+')
+        % Plot the vehicle body in the position of the collision or near
+        % miss
+        collHeading = theta(1) + sign(R)*collAngle(collInd) + (pi/2+a0);
+        collCG = [R*cos(theta(1) + sign(R)*collAngle(collInd)) R*sin(theta(1) + sign(R)*collAngle(collInd))] + pc;
+        plotVehicleBB(collCG,collHeading,vehicle,1)
         
         % Plot the collision or closest clearance point
         plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
@@ -221,4 +199,28 @@ if 0 == initial_collision_flag
 %     axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
     % Create a legend
     %legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
+end
+
+function plotVehicleBB(pCG,heading,vehicle,figHandle)
+
+% Enumerate the body positions and directions
+LF = 1; RF = 2; RR = 3; LR = 4; X = 1; Y = 2;
+
+% Address the specified figure
+figure(figHandle)
+% Plot the CG location
+plot(pCG(X),pCG(Y),'ko')
+plot(pCG(X),pCG(Y),'k+')
+
+% Compute the locations of the bounding box points by adding vectors to the CG. To move fore/aft, add df/dr at the heading angle or the heading angle - pi. To move left/right, add w/2 at the heading angle plus/minus pi/2.
+vehicleBB(LF,X) = pCG(X) + vehicle.df*cos(heading)    + vehicle.w/2*cos(heading + pi/2);
+vehicleBB(LF,Y) = pCG(Y) + vehicle.df*sin(heading)    + vehicle.w/2*sin(heading + pi/2);
+vehicleBB(RF,X) = pCG(X) + vehicle.df*cos(heading) + vehicle.w/2*cos(heading - pi/2);
+vehicleBB(RF,Y) = pCG(Y) + vehicle.df*sin(heading) + vehicle.w/2*sin(heading - pi/2);
+vehicleBB(RR,X) = pCG(X) + vehicle.dr*cos(heading-pi) + vehicle.w/2*cos(heading - pi/2);
+vehicleBB(RR,Y) = pCG(Y) + vehicle.dr*sin(heading-pi) + vehicle.w/2*sin(heading - pi/2);
+vehicleBB(LR,X) = pCG(X) + vehicle.dr*cos(heading-pi)    + vehicle.w/2*cos(heading + pi/2);
+vehicleBB(LR,Y) = pCG(Y) + vehicle.dr*sin(heading-pi)    + vehicle.w/2*sin(heading + pi/2);
+% Plot the vehicle bounding box
+plot(vehicleBB([1:end 1],X),vehicleBB([1:end 1],Y),'b-','linewidth',1);
 end
