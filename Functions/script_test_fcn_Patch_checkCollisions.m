@@ -12,7 +12,13 @@
 flag_getNewData = 1;
 flag_loadData = 0;
 
+% Try to add the path to the geometry library containing the function to
+% find intersections between circles and line segments
 addpath('~/Documents/MATLAB/PSU_GeometryLib/Functions/')
+% Confirm that the function path was added successfully, or throw an error
+if ~exist('fcn_geometry_findIntersectionLineSegmentWithCircle')
+    error('Cannot find needed dependency fcn_geometry_findIntersectionLineSegmentWithCircle.m')
+end
 
 % Clear existing data if new data is desired
 if 1 == flag_getNewData || 1 == flag_loadData
@@ -33,16 +39,16 @@ vx = 20;        % longitudinal speed (m/s)
 R = 15;         % path radius (m) with sign (+ left, - right)
 p0 = [10,-5];     % initial position of vehicle (m,m)
 h0 = pi/2;     % initial heading of vehicle (rad)
-a0 = 15*pi/180; % vehicle body slip angle (rad)
+a0 = 0*pi/180; % vehicle body slip angle (rad)
 tf = 1.9*pi*abs(R)/vx;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; a0; vx; R];
 % Vehicle dimensional information
-vehicle.dr = 2.2;       % CG-front bumper distance (m)
-vehicle.df = 8;        % CG-rear bumper distance (m)
+vehicle.dr = 8.2;       % CG-front bumper distance (m)
+vehicle.df = 2.2;        % CG-rear bumper distance (m)
 vehicle.w = 2.0;        % vehicle width (m)
 
-% Plot the points
+% Set up a figure for plotting the collision geometry
 figure(1)
 clf
 hold on
@@ -189,14 +195,14 @@ if 0 == initial_collision_flag
     
     [~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
     
-%     % Create another copy of the figure
-%     figure(1)
-%     a1 = gca;
-%     f2 = figure(2);
-%     clf
-%     a2 = copyobj(a1,f2);
-%     figure(2)
-%     axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
+    % Create another copy of the figure
+    figure(1)
+    a1 = gca;
+    f2 = figure(2);
+    clf
+    a2 = copyobj(a1,f2);
+    figure(2)
+    axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
     % Create a legend
     %legend('Vehicle Start Point','Vehicle Trajectory','Inner Vehicle Bound','Outer Vehicle Bound','Vehicle CG','Vehicle Outline at Start','Obstacle','Obstacle Vertices','Vehicle Outline at Collision','Collision Point','location','best')
 end
