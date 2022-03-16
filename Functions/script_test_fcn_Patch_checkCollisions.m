@@ -39,7 +39,7 @@ vx = 20;        % longitudinal speed (m/s)
 R = 15;         % path radius (m) with sign (+ left, - right)
 p0 = [10,-5];     % initial position of vehicle (m,m)
 h0 = pi/2;     % initial heading of vehicle (rad)
-a0 = 0*pi/180; % vehicle body slip angle (rad)
+a0 = -5*pi/180; % vehicle body slip angle (rad)
 tf = 1.9*pi*abs(R)/vx;         % time horizon to check (s)
 % Create a vector of the trajectory information
 x0 = [p0'; h0; a0; vx; R];
