@@ -542,6 +542,9 @@ for patchInd = 1:Npatches
       clearance(patchInd) = nearestOuterClearance;
       % The location is the previously computed closest point
       location(patchInd,:) = pmin;
+      % Determine the closest point on the vehicle
+      bodyLoc(patchInd,:) = (rotMat*(vehicleBB(radiiFlags(2),:)' - p0))';
+      
     else
       % The inner point is closer, so pull that point out of the
       % matrix with the nearestInner index
@@ -553,6 +556,9 @@ for patchInd = 1:Npatches
       % The location is the computed closest point on the obstacle
       location(patchInd,:) = pa;
       
+      % Determine the closest point on the vehicle
+      bodyLoc(patchInd,:) = (rotMat*(vehicleBB(radiiFlags(1),:)' - p0))';
+        
       % The closest point is inside, so the closest point on the
       % vehicle will be the corner or tangent on the min radius
       minCorner = radiiFlags(1);
@@ -568,8 +574,6 @@ for patchInd = 1:Npatches
     
     % Compute the time associated with the minimum clearance event
     time(patchInd) = rerangeAngles(angle(patchInd))*abs(R)/v0;
-    % No collision, so no body collision location
-    bodyLoc(patchInd,:) = [NaN NaN];
     
   else
     % There is a collision, so determine where/when it occurs

@@ -119,7 +119,7 @@ h = zeros(NumPatches,1);
 hpts = zeros(NumPatches,1);
 for i_patch= 1:NumPatches
     h(i_patch) = patch(patchArray(idxVec(i_patch)).pointsX,patchArray(idxVec(i_patch)).pointsY,patchArray(idxVec(i_patch)).color);
-    hpts(i_patch) = plot(patchArray(idxVec(i_patch)).pointsX,patchArray(idxVec(i_patch)).pointsY,'k*');
+    %hpts(i_patch) = plot(patchArray(idxVec(i_patch)).pointsX,patchArray(idxVec(i_patch)).pointsY,'k*');
 end
 
 % Shut the hold off?

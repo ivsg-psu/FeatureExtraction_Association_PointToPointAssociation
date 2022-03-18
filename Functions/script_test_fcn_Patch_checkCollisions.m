@@ -217,13 +217,13 @@ if 0 == initial_collision_flag
     plotVehicleBB(collCG,collHeading,vehicle,1)
     
     % Plot the collision or closest clearance point
-    plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
+    plot(collLoc(obstacleInd,1),collLoc(obstacleInd,2),'r*')
     
     % Report the findings, either for a collision or near miss
-    if 1 == collFlags(collInd)
-      fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+    if 1 == collFlags(obstacleInd)
+      fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',obstacleInd,collTime(obstacleInd),collLoc(obstacleInd,1),collLoc(obstacleInd,2));
     else
-      fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+      fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',obstacleInd,clearance(obstacleInd),collLoc(obstacleInd,1),collLoc(obstacleInd,2),collTime(obstacleInd));
     end
   end
   
