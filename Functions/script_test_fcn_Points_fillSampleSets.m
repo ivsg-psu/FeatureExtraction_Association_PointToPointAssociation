@@ -6,35 +6,42 @@
 % script_test_fcn_Path_fillSamplePaths
 % Questions or comments? sbrennan@psu.edu
 
-% Revision history
-%     2022_01_12
-%     -- adapted for XY datasets without path ordering
+%% Revision history
+% 2022_01_12
+% -- adapted for XY datasets without path ordering
+% 2022_07_01
+% -- added sections and two test examples
 
-close all
-clc
+clc, close all
+%% Setup
 
 % Call the function to fill in an array of "dataset" type
-datasets_array = fcn_Points_fillSampleSets;
+datasets_array = fcn_Points_fillPointSampleSets;
 
-% We can even save one of these as a single "dataset"
-single_path = datasets_array{1};
 
-% % Convert paths to traversals structures. Each traversal instance is a
-% % "traversal" type, and the array called "data" below is a "traversals"
-% % type.
-% for i_Path = 1:length(paths_array)
-%     traversal = fcn_Path_convertPathToTraversalStructure(paths_array{i_Path});
-%     data.traversal{i_Path} = traversal;
-% end
-%
+%% Example 1
+% We can save one of these as a single "dataset"
 
-% Call the plot command to show results in XY
-% Show result
-figure
-hold on
+single_path = {datasets_array{1}};
+
+fcn_Points_plotSetsXY(single_path,1);
+text(single_path{1}(1,1),single_path{1}(1,2),'Start');
+
+
+%% Example 2
+% illustrating the different XY points on different plots
+
 for i_set = 1:length(datasets_array)
-    plot(datasets_array{i_set}(:,1),datasets_array{i_set}(:,2),'.','Markersize',20);
+    fcn_Points_plotSetsXY(datasets_array(i_set),(i_set+1));
     text(datasets_array{i_set}(1,1),datasets_array{i_set}(1,2),'Start');
 end
+
+%% Example 3
+% All plots on the same graph
+
+fcn_Points_plotSetsXY(datasets_array,5);
+
+
+%%
 
 
