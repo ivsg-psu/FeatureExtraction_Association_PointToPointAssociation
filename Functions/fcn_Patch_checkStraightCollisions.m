@@ -1,4 +1,4 @@
-function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,patchArray)
+function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,patchArray,varargin)
 % fcn_Patch_checkStraightCollisions
 % Evaluates a straight vehicle trajectory against a series of patches to
 % determine whether there will be collisions between the vehicle and the
@@ -11,7 +11,7 @@ function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCol
 %
 % FORMAT:
 %
-%       [flags,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,patchArray)
+%       [flags,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,patchArray,(t_f),(fig_num))
 %
 % INPUTS:
 %
@@ -24,6 +24,11 @@ function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCol
 %           respectively.
 %      patchArray: a structure array defining the objects with which the
 %           vehicle could potentially collide
+%
+%                   OPTIONAL INPUTS
+%
+%       t_f: [1x1] time scalar for plotting purspose
+%       fig_num: figure number
 %
 % OUTPUTS:
 %
@@ -53,7 +58,7 @@ function [collFlag,time,location,clearance,bodyLoc] = fcn_Patch_checkStraightCol
 %
 % EXAMPLES:
 %
-%       See the script: script_test_fcn_Patch_checkCollisions.m for a full test
+%       See the script: script_test_fcn_Patch_checkStraightCollisions.m for a full test
 %       suite.
 %
 % This function was written by C. Beal
@@ -88,7 +93,7 @@ end
 
 if flag_check_inputs == 1
     % Are there the right number of inputs?
-    if nargin ~= 3
+    if nargin < 3 || nargin > 5
         error('Incorrect number of input arguments')
     end
     
@@ -117,6 +122,16 @@ if flag_check_inputs == 1
     if isfield(vehicle,'w') && isempty(vehicle.df)
         error('Vehicle width empty.')
     end
+end
+
+if nargin == 5
+    t_f = varargin{1};
+    fig_num = varargin{2};
+    flag_do_debug = 1;
+elseif nargin == 4
+    t_f = input('time that the vehicle travels (to draw trajectory): ');
+    fig_num = varargin{1};
+    flag_do_debug = 1;
 end
 
 %% Main body of the code
@@ -165,7 +180,7 @@ for patchInd = 1:Npatches
     % Determine any vertices that fall within the trajectory that are
     % within the width of the vehicle on the x-axis between the back of the
     % vehicle (-vehicle.dr) and some large distance (1e6)
-    collVertexInds = find(abs(rotObst(:,2)) < 1 & rotObst(:,1) > -vehicle.dr);
+    collVertexInds = find(abs(rotObst(:,2)) < 1*vehicle.w/2 & rotObst(:,1) > -vehicle.dr);
     
     % Add any vertices that are within the path to the list of collision
     % locations that will be evaluated to find the earliest one on the path
@@ -224,4 +239,27 @@ for patchInd = 1:Npatches
         % and translated back to the original coordinate system
         location(patchInd,:) = (rotObst(minClearanceInd,:)*rotMat)' + p0;
     end  
+%% Plot the results (for debugging)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if flag_do_debug == 1
+    figure(fig_num)
+    hold on
+    grid on
+
+    fcn_Patch_plotStraightTrajectory(t_f,x0,vehicle,fig_num)
+    fcn_Patch_plotPatch(patchArray,fig_num);
+    axis auto
+    fcn_Patch_plotStraightCollisions(collFlag,location,clearance,bodyLoc,vehicle,x0(3),fig_num)
+
+end
 end
