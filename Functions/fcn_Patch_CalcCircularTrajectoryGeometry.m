@@ -53,7 +53,7 @@ function [trajectoryRadii,boundingPoints,radiiFlags] = fcn_Patch_CalcCircularTra
 %               placed inside this radius
 %           (7) Rmax: largest radius on the circular trajectory that the 
 %               vehicle will "clear" and not collide with an obstacle
-%               placed outside of this radius
+%               placed outside of this radiusActual 
 %      boundingPoints: a 4 x 2 vector representing the locations of the
 %           corners of the bounding box for the vehicle, in order of LF,
 %           LR, RF, RR
@@ -236,7 +236,7 @@ if alpha < 1 && alpha > 0
     boundingPoints(5,:) = pa + alpha*(pb-pa);
     % Add the point to the plot, if desired
     if flag_do_debug
-        plot(boundingPoints(5,X),boundingPoints(5,Y),'r*')
+        plot(boundingPoints(5,X),boundingPoints(5,Y),'b*')
     end
     % Calculate and store the radius associated with this tangent point
     trajectoryRadii(5) = norm(boundingPoints(5,:)-pc);

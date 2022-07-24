@@ -1,4 +1,4 @@
-function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
+function [collFlag,time,angle,collLoc,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray,varargin)
 % fcn_Patch_checkCollisions
 % Evaluates a circular vehicle trajectory against a series of patches to
 % determine whether there will be collisions between the vehicle and the
@@ -12,7 +12,7 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %
 % FORMAT:
 %
-%       [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray)
+%       [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray,(t_f),(fig_num))
 %
 % INPUTS:
 %
@@ -26,6 +26,11 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 %           respectively.
 %      patchArray: a structure array defining the objects with which the
 %           vehicle could potentially collide
+%
+%                               OPTIONAL INPUTS
+%        
+%       t_f: [1x1] time scalar for plotting purspose
+%       fig_num: figure number
 %
 % OUTPUTS:
 %
@@ -77,6 +82,8 @@ function [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkColli
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
+flag_show_pertinent_obj_points = 0; % Flag to show pertinent object points when debug is on
+
 
 if flag_do_debug
   st = dbstack; %#ok<*UNRCH>
@@ -100,7 +107,7 @@ end
 
 if flag_check_inputs == 1
   % Are there the right number of inputs?
-  if nargin ~= 3
+  if nargin < 3 || nargin > 5
     error('Incorrect number of input arguments')
   end
   
@@ -131,6 +138,16 @@ if flag_check_inputs == 1
   end
 end
 
+if nargin == 5
+    t_f = varargin{1};
+    fig_num = varargin{2};
+    flag_do_debug = 1;
+elseif nargin == 4
+    t_f = input('time that the vehicle travels (to draw trajectory): ');
+    fig_num = varargin{1};
+    flag_do_debug = 1;
+end
+
 
 
 %% Main body of the code
@@ -138,17 +155,23 @@ end
 %   __  __       _
 %  |  \/  |     (_)
 %  | \  / | __ _ _ _ __
-%  | |\/| |/ _` | | '_ \
+%  | |\/| |/ _` | | '_ \ 
 %  | |  | | (_| | | | | |
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if Inf == abs(x0(6))
+    error('This script does not handle straight line motion. Use script_test_fcn_Patch_checkStraightCollisions instead.');
+end
+
+figure(fig_num);
+hold on
 
 % Break out some variables for easier referencing
 p0 = x0(1:2);   % Initial location of the vehicle
 CoG0 = x0(3);     % Initial heading of the vehicle
 a0 = x0(4);     % Vehicle body slip angle
-v0 = x0(5);     % Initial (and constant) vehicle speed
+v0 = x0(5);     % Initial (and constant)vehicle speed
 R = x0(6);      % Radius of the circular trajectory
 
 % Enumerate some variables for easier code reading
@@ -208,7 +231,7 @@ end
 % debugging purposes
 time = nan(Npatches,1);
 angle = nan(Npatches,1);
-location = nan(Npatches,2);
+collLoc = nan(Npatches,2);
 clearance = nan(Npatches,1);
 collFlag = nan(Npatches,1);
 bodyLoc = nan(Npatches,2);
@@ -528,7 +551,7 @@ for patchInd = 1:Npatches
     % Determine the actual clearance from the closest outer point
     nearestOuterClearance = norm(pmin - pc) - Rmax;
     
-    % Check to see whether the closest point outside the trajectory is
+    % Check to see whether the closest point outside the trajectory is 
     % closer than the closest point inside the trajectory
     if nearestOuterClearance > nearestInnerClearance
       
@@ -541,7 +564,7 @@ for patchInd = 1:Npatches
       % output variable
       clearance(patchInd) = nearestOuterClearance;
       % The location is the previously computed closest point
-      location(patchInd,:) = pmin;
+      collLoc(patchInd,:) = pmin;
       % Determine the closest point on the vehicle
       bodyLoc(patchInd,:) = (rotMat*(vehicleBB(radiiFlags(2),:)' - p0))';
       
@@ -554,7 +577,7 @@ for patchInd = 1:Npatches
       % and the minimum radius
       clearance(patchInd) = abs(norm(pa - pc) - Rmin);
       % The location is the computed closest point on the obstacle
-      location(patchInd,:) = pa;
+      collLoc(patchInd,:) = pa;
       
       % Determine the closest point on the vehicle
       bodyLoc(patchInd,:) = (rotMat*(vehicleBB(radiiFlags(1),:)' - p0))';
@@ -567,7 +590,7 @@ for patchInd = 1:Npatches
     % Using the offset angle from the inner or outer point, compute the
     % angle of the vehicle CG when the minimum clearance event is
     % reached
-    angle(patchInd) = atan2(location(patchInd,Y)-pc(Y),location(patchInd,X)-pc(X)) - theta_offset;
+    angle(patchInd) = atan2(collLoc(patchInd,Y)-pc(Y),collLoc(patchInd,X)-pc(X)) - theta_offset;
     if R < 0
       angle(patchInd) = 2*pi - angle(patchInd);
     end
@@ -611,62 +634,89 @@ for patchInd = 1:Npatches
     switch(idy)
       % LF - first intersection
       case 1
-        location(patchInd,:) = xyLeftFrontCorner(idx,1:2);
+        collLoc(patchInd,:) = xyLeftFrontCorner(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(1,1:2);
         % LF - second intersection
       case 2
-        location(patchInd,:) = xyLeftFrontCorner(idx,3:4);
+        collLoc(patchInd,:) = xyLeftFrontCorner(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYLeftFrontCorner(1,1:2);
         % RF - first intersection
       case 3
-        location(patchInd,:) = xyRightFrontCorner(idx,1:2);
+        collLoc(patchInd,:) = xyRightFrontCorner(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYRightFrontCorner(1,1:2);
         % RF - second intersection
       case 4
-        location(patchInd,:) = xyRightFrontCorner(idx,3:4);
+        collLoc(patchInd,:) = xyRightFrontCorner(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYRightFrontCorner(1,1:2);
         % RR - first intersection
       case 5
-        location(patchInd,:) = xyRightRearCorner(idx,1:2);
+        collLoc(patchInd,:) = xyRightRearCorner(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYRightRearCorner(1,1:2);
         % RR - second intersection
       case 6
-        location(patchInd,:) = xyRightRearCorner(idx,3:4);
+        collLoc(patchInd,:) = xyRightRearCorner(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYRightRearCorner(1,1:2);
         % LR - first intersection
       case 7
-        location(patchInd,:) = xyLeftRearCorner(idx,1:2);
+        collLoc(patchInd,:) = xyLeftRearCorner(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYLeftRearCorner(1,1:2);
         % LR - second intersection
       case 8
-        location(patchInd,:) = xyLeftRearCorner(idx,3:4);
+        collLoc(patchInd,:) = xyLeftRearCorner(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYLeftRearCorner(1,1:2);
         % Left Side - first intersection
       case 9
-        location(patchInd,:) = xyLeftSide(idx,1:2);
+        collLoc(patchInd,:) = xyLeftSide(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYLeftSide(idx,1:2);
         % Left Side - second intersection
       case 10
-        location(patchInd,:) = xyLeftSide(idx,3:4);
+        collLoc(patchInd,:) = xyLeftSide(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYLeftSide(idx,3:4);
         % Right Side - first intersection
       case 11
-        location(patchInd,:) = xyRightSide(idx,1:2);
+        collLoc(patchInd,:) = xyRightSide(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYRightSide(idx,1:2);
         % Right Side - second intersection
       case 12
-        location(patchInd,:) = xyRightSide(idx,3:4);
+        collLoc(patchInd,:) = xyRightSide(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYRightSide(idx,3:4);
         % Front - first intersection
       case 13
-        location(patchInd,:) = xyFront(idx,1:2);
+        collLoc(patchInd,:) = xyFront(idx,1:2);
         bodyLoc(patchInd,:) = bodyXYFront(idx,1:2);
         % Front - second intersection
       case 14
-        location(patchInd,:) = xyFront(idx,3:4);
+        collLoc(patchInd,:) = xyFront(idx,3:4);
         bodyLoc(patchInd,:) = bodyXYFront(idx,3:4);
     end
   end
+end
+
+if flag_show_pertinent_obj_points == 0
+    close
+end
+
+%% Plot the results (for debugging)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if flag_do_debug == 1
+    figure(fig_num)
+    hold on
+    grid on
+
+    fcn_Patch_plotCircularTrajectory(t_f,x0,vehicle,fig_num)
+    fcn_Patch_plotPatch(patchArray,fig_num)
+    fcn_Patch_plotCircularCollisions(x0,vehicle,patchArray,angle,collLoc,t_f,fig_num)
+
 end
 end
 

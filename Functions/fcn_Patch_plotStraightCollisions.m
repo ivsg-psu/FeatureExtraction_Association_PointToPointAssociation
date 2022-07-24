@@ -1,18 +1,31 @@
-function fcn_Patch_plotStraightTrajectory(collFlags,collLoc,clearance,bodyCollLoc,vehicle,h0,varargin)
+function fcn_Patch_plotStraightCollisions(collFlags,collLoc,clearance,bodyCollLoc,vehicle,h0,varargin)
 % fcn_Patch_plotPatch
 % Plots a visual representation of the objects in a patch structure array
 %
 % FORMAT: 
 %
-%       fcn_Patch_plotCenterGravity(centerOfGravity)
+%       fcn_Patch_plotStraightCollisions(collFlags,collLoc,clearance,bodyCollLoc,vehicle,h0,(fig_num))
 %
 % INPUTS:
 %
-%      tf: [1x1] scalar, representing time horizon to check
-%      vx: [1x1] scalar, representing longitudinal speed
-%      CG: [1x1] scalar, representing initial position of the vehicle
-%      h0: [1x1] scalar, representing initial heading of the vehicle
-%      vehicle: [1x1] cell struct with vehicle properties
+%      collFlags: an N x 1 vector of flags denoting whether there is a
+%           collision with each of the objects
+%      collLoc: a N x 2 vector of collision locations, where N is the
+%           number of patch objects and the columns are the x and y
+%           coordinates of the collision. Elements of the location matrix
+%           will be set to NaN if there is no overlap with the vehicle
+%           path.
+%       clearance: an N x 1 vector of minimum clearance distances between
+%           the vehicle and the patch objects, where N is the number of
+%           patch objects. Elements of the clearance vector will be set to
+%           NaN if there is a collision with the object.
+%       bodyCollLoc: an N x 2 vector of collision locations in vehicle body
+%           fixed coordinates, where N is the number of patch objects and
+%           the columns are the x and y coordinates of the collision.
+%           Elements of the location matrix will be set to NaN if there is
+%           no overlap with the vehicle path
+%       vehicle: [1x1] cell struct with vehicle properties
+%       h0: [1x1] scalar, representing initial heading of the vehicle
 %
 %      (OPTIONAL INPUTS)
 %      fig_num: a figure number to plot into
@@ -25,7 +38,7 @@ function fcn_Patch_plotStraightTrajectory(collFlags,collLoc,clearance,bodyCollLo
 %
 % EXAMPLES:
 %      
-%       See the script: script_test_fcn_Patch_plotStraightTragectory.m for a full test
+%       See the script: script_test_fcn_Patch_plotStraightCollisions.m for a full test
 %       suite. 
 %
 % This function was written by Shashank Garikipati
@@ -36,6 +49,7 @@ function fcn_Patch_plotStraightTrajectory(collFlags,collLoc,clearance,bodyCollLo
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
+flag_mediumRes = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -104,8 +118,70 @@ for collInd = 1:length(collFlags)
     bodyLoc(3,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + (-vehicle.w/2-plotOffset(2))*cos(h0);
     bodyLoc(4,1) = collLoc(collInd,1) + (-vehicle.dr - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
     bodyLoc(4,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
+
     plot(bodyLoc([1:end 1],1),bodyLoc([1:end 1],2),'b-','linewidth',1);
+
+    if 1 == flag_mediumRes
     
+        body1Loc(1,1) = collLoc(collInd,1) + (vehicle.df - plotOffset(1))*cos(h0) - (((vehicle.w/2-(1/2)*vehicle.w/2))-plotOffset(2))*sin(h0);
+        body1Loc(1,2) = collLoc(collInd,2) + (vehicle.df - plotOffset(1))*sin(h0) + (((vehicle.w/2-(1/2)*vehicle.w/2))-plotOffset(2))*cos(h0);
+        body1Loc(2,1) = collLoc(collInd,1) + ((vehicle.df-(1/3.5)*vehicle.df) - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
+        body1Loc(2,2) = collLoc(collInd,2) + ((vehicle.df-(1/3.5)*vehicle.df) - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
+        body1Loc(3,1) = collLoc(collInd,1) + ((-vehicle.dr/2-(1/8)*vehicle.dr/2) - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
+        body1Loc(3,2) = collLoc(collInd,2) + ((-vehicle.dr/2-(1/8)*vehicle.dr/2) - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
+        body1Loc(4,1) = collLoc(collInd,1) + (-vehicle.dr - plotOffset(1))*cos(h0) - ((vehicle.w/2-(1/2)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body1Loc(4,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + ((vehicle.w/2-(1/2)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        
+        body1Loc(5,1) = collLoc(collInd,1) + (-vehicle.dr - plotOffset(1))*cos(h0) - (((-vehicle.w/2+(1/2)*vehicle.w/2))-plotOffset(2))*sin(h0);
+        body1Loc(5,2) = collLoc(collInd,2) + (-vehicle.dr - plotOffset(1))*sin(h0) + (((-vehicle.w/2+(1/2)*vehicle.w/2))-plotOffset(2))*cos(h0);
+        body1Loc(6,1) = collLoc(collInd,1) + ((-vehicle.dr/2-(1/8)*vehicle.dr/2) - plotOffset(1))*cos(h0) - (-vehicle.w/2-plotOffset(2))*sin(h0);
+        body1Loc(6,2) = collLoc(collInd,2) + ((-vehicle.dr/2-(1/8)*vehicle.dr/2) - plotOffset(1))*sin(h0) + (-vehicle.w/2-plotOffset(2))*cos(h0);
+        body1Loc(7,1) = collLoc(collInd,1) + ((vehicle.df-(1/3.5)*vehicle.df) - plotOffset(1))*cos(h0) - (-vehicle.w/2-plotOffset(2))*sin(h0);
+        body1Loc(7,2) = collLoc(collInd,2) + ((vehicle.df-(1/3.5)*vehicle.df) - plotOffset(1))*sin(h0) + (-vehicle.w/2-plotOffset(2))*cos(h0);
+        body1Loc(8,1) = collLoc(collInd,1) + (vehicle.df - plotOffset(1))*cos(h0) - (((-vehicle.w/2+(1/2)*vehicle.w/2))-plotOffset(2))*sin(h0);
+        body1Loc(8,2) = collLoc(collInd,2) + (vehicle.df - plotOffset(1))*sin(h0) + (((-vehicle.w/2+(1/2)*vehicle.w/2))-plotOffset(2))*cos(h0);
+        plot(body1Loc([1:end 1],1),body1Loc([1:end 1],2),'k','linewidth',1);
+    
+        body2Loc(1,1) = collLoc(collInd,1) + ((vehicle.df-(1/3)*vehicle.df) - plotOffset(1))*cos(h0) - (vehicle.w/2-plotOffset(2))*sin(h0);
+        body2Loc(1,2) = collLoc(collInd,2) + ((vehicle.df-(1/3)*vehicle.df) - plotOffset(1))*sin(h0) + (vehicle.w/2-plotOffset(2))*cos(h0);
+        body2Loc(2,1) = collLoc(collInd,1) + ((vehicle.df-(1/3.8)*vehicle.df) - plotOffset(1))*cos(h0) - ((vehicle.w/2-(1/2)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body2Loc(2,2) = collLoc(collInd,2) + ((vehicle.df-(1/3.8)*vehicle.df) - plotOffset(1))*sin(h0) + ((vehicle.w/2-(1/2)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body2Loc(3,1) = collLoc(collInd,1) + ((vehicle.df-(1/3.8)*vehicle.df) - plotOffset(1))*cos(h0) - ((-vehicle.w/2+(1/2)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body2Loc(3,2) = collLoc(collInd,2) + ((vehicle.df-(1/3.8)*vehicle.df) - plotOffset(1))*sin(h0) + ((-vehicle.w/2+(1/2)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body2Loc(4,1) = collLoc(collInd,1) + ((vehicle.df-(1/3)*vehicle.df) - plotOffset(1))*cos(h0) - ((-vehicle.w/2)-plotOffset(2))*sin(h0);
+        body2Loc(4,2) = collLoc(collInd,2) + ((vehicle.df-(1/3)*vehicle.df) - plotOffset(1))*sin(h0) + ((-vehicle.w/2)-plotOffset(2))*cos(h0);
+    
+        body2Loc(5,1) = collLoc(collInd,1) + ((vehicle.df-(1/1.8)*vehicle.df) - plotOffset(1))*cos(h0) - ((-vehicle.w/2+(1/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body2Loc(5,2) = collLoc(collInd,2) + ((vehicle.df-(1/1.8)*vehicle.df) - plotOffset(1))*sin(h0) + ((-vehicle.w/2+(1/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body2Loc(6,1) = collLoc(collInd,1) + ((vehicle.df-(1/1.8)*vehicle.df) - plotOffset(1))*cos(h0) - ((vehicle.w/2-(1/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body2Loc(6,2) = collLoc(collInd,2) + ((vehicle.df-(1/1.8)*vehicle.df) - plotOffset(1))*sin(h0) + ((vehicle.w/2-(1/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+    
+        plot(body2Loc([1:end 1],1),body2Loc([1:end 1],2),'k','linewidth',1);
+    
+        body3Loc(1,1) = collLoc(collInd,1) + ((-vehicle.dr/6) - plotOffset(1))*cos(h0) - ((vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body3Loc(1,2) = collLoc(collInd,2) + ((-vehicle.dr/6) - plotOffset(1))*sin(h0) + ((vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body3Loc(2,1) = collLoc(collInd,1) + ((-vehicle.dr/6) - plotOffset(1))*cos(h0) - (-(vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body3Loc(2,2) = collLoc(collInd,2) + ((-vehicle.dr/6) - plotOffset(1))*sin(h0) + (-(vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body3Loc(3,1) = collLoc(collInd,1) + ((-vehicle.dr/1.5) - plotOffset(1))*cos(h0) - (-(vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body3Loc(3,2) = collLoc(collInd,2) + ((-vehicle.dr/1.5) - plotOffset(1))*sin(h0) + (-(vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+        body3Loc(4,1) = collLoc(collInd,1) + ((-vehicle.dr/1.4) - plotOffset(1))*cos(h0) - (-plotOffset(2))*sin(h0);
+        body3Loc(4,2) = collLoc(collInd,2) + ((-vehicle.dr/1.4) - plotOffset(1))*sin(h0) + (-plotOffset(2))*cos(h0);
+        body3Loc(5,1) = collLoc(collInd,1) + ((-vehicle.dr/1.5) - plotOffset(1))*cos(h0) - ((vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*sin(h0);
+        body3Loc(5,2) = collLoc(collInd,2) + ((-vehicle.dr/1.5) - plotOffset(1))*sin(h0) + ((vehicle.w/2-(1.5/4)*vehicle.w/2)-plotOffset(2))*cos(h0);
+
+        plot(body3Loc([1:end 1],1),body3Loc([1:end 1],2),'k','linewidth',1);
+
+        if 0 == collFlags(:,collInd)
+            a = sqrt((body1Loc(1,1) - collLoc(collInd,1))^2 + (body1Loc(1,2) - collLoc(collInd,2))^2);
+            b = sqrt((body1Loc(4,1) - collLoc(collInd,1))^2 + (body1Loc(4,2) - collLoc(collInd,2))^2);
+            if b > a
+                quiver(body1Loc(1,1),body1Loc(1,2) ,collLoc(collInd,1) - body1Loc(1,1),collLoc(collInd,2) - body1Loc(1,2),0,'k','linewidth',1);
+            else
+                quiver(body1Loc(4,1),body1Loc(4,2) ,collLoc(collInd,1) - body1Loc(4,1),collLoc(collInd,2) - body1Loc(4,2),0,'k','linewidth',1);
+            end
+        end
+    end
+
     % Plot the collision or closest clearance point
     plot(collLoc(collInd,1),collLoc(collInd,2),'r*')
 end

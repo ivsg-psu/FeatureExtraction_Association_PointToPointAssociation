@@ -7,7 +7,7 @@
 
 
 %% Revision history
-% 2022_01_26
+% 2022_01_26 - C. Beal
 % -- wrote the code
 % 2022_07_03 - Shashank Garikipati
 % -- organized script into 4 examples and added patch for demonstration

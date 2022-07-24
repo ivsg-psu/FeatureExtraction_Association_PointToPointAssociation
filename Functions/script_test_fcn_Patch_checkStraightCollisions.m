@@ -14,7 +14,7 @@
 % 2022_07_)6-- Shashank Garikipati
 
 %% Example 1
-% vehicle vertex to object edge collision with figure num
+% vehicle vertex to object left edge collision with figure num
 
 fig_num = 1;
 
@@ -27,8 +27,8 @@ t_h = 1.5;         % time horizon to check (s)
 x0 = [p0'; h0; vx];
 
 % Vehicle dimensional information
-vehicle.dr = 2.2;       % CG-front bumper distance (m)
-vehicle.df = 3.5;        % CG-rear bumper distance (m)
+vehicle.dr = 1.5;       % CG-front bumper distance (m)
+vehicle.df = 3.0;        % CG-rear bumper distance (m)
 vehicle.w = 2.3;        % vehicle width (m)
 
 % Define an octagon obstacle that represents a barrel
@@ -36,7 +36,7 @@ obstacle1 = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'
 obstacle1(1).id = 'qwert';
 obstacle1(1).color = [ 0.4 0.4 0.4];
 obstacle1(1).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184];
-obstacle1(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569];
+obstacle1(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]+8;
 
 % detect collision and show visualization
 tic
@@ -66,11 +66,64 @@ axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collL
 
 % assertion to ensure collision point is correct
 assert(isequal(round(collLoc,2),[-4.93 21.74]));
-
 %% Example 2
-% object vertex to vehicle edge collision 
+% vehicle vertex to right object edge collision with figure num
 
 fig_num = 3;
+
+% Vehicle trajectory information
+vx =20;        % longitudinal speed (m/s)
+p0 = [2,8];     % initial position of vehicle (m,m)
+h0 = 5*pi/8;      % initial heading of vehicle (rad)
+t_h = 1.5;         % time horizon to check (s)
+% Create a vector of the trajectory information
+x0 = [p0'; h0; vx];
+
+% Vehicle dimensional information
+vehicle.dr = 1.5;       % CG-front bumper distance (m)
+vehicle.df = 3.0;        % CG-rear bumper distance (m)
+vehicle.w = 2.3;        % vehicle width (m)
+
+% Define an octagon obstacle that represents a barrel
+obstacle1 = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
+obstacle1(1).id = 'qwert';
+obstacle1(1).color = [ 0.4 0.4 0.4];
+obstacle1(1).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184];
+obstacle1(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569];
+
+% detect collision and show visualization
+tic
+[collFlags,collTime,collLoc,clearance,bodyCollLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,obstacle1,t_h,fig_num);
+ET = toc;
+
+fprintf(1,'Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
+
+for collInd = 1:length(collFlags)
+    if 1 == collFlags(collInd)
+        fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+    else
+        fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+    end
+end
+
+[~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
+
+% Create another copy of the figure zoomed into the collision
+figure(3)
+a1 = gca;
+f2 = figure(4);
+clf
+a2 = copyobj(a1,f2);
+figure(4)
+axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
+
+% assertion to ensure collision point is correct
+assert(isequal(round(collLoc,2),[-4.93 21.74]));
+
+%% Example 3
+% object vertex to vehicle edge collision 
+
+fig_num = 5;
 
 % Vehicle trajectory information
 vx =20;        % longitudinal speed (m/s)
@@ -81,7 +134,7 @@ t_f = 1.5;
 x0 = [p0'; h0; vx];
 
 % Vehicle dimensional information
-vehicle.dr = 2.2;       % CG-front bumper distance (m)
+vehicle.dr = 1.8;       % CG-front bumper distance (m)
 vehicle.df = 3.5;        % CG-rear bumper distance (m)
 vehicle.w = 2.3;        % vehicle width (m)
 
@@ -111,21 +164,85 @@ end
 [~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
 
 % Create another copy of the figure zoomed into the collision
-figure(3)
+figure(5)
 a1 = gca;
-f2 = figure(4);
+f2 = figure(6);
 clf
 a2 = copyobj(a1,f2);
-figure(4)
+figure(6)
 axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
 
 % assertion to ensure collision point is correct
 assert(isequal(round(collLoc,2),[-6.36 17.12]));
 
-%% Example 3
+%% Example 4
+% vehicle vertex to right object edge collision with figure num
+
+fig_num = 7;
+
+% Vehicle trajectory information
+vx =20;        % longitudinal speed (m/s)
+p0 = [2,8];     % initial position of vehicle (m,m)
+h0 = 5*pi/8;      % initial heading of vehicle (rad)
+t_h = 1.5;         % time horizon to check (s)
+% Create a vector of the trajectory information
+x0 = [p0'; h0; vx];
+
+% Vehicle dimensional information
+vehicle.dr = 1.5;       % CG-front bumper distance (m)
+vehicle.df = 3.0;        % CG-rear bumper distance (m)
+vehicle.w = 2.3;        % vehicle width (m)
+
+% Define an octagon obstacle that represents a barrel
+obstacle1 = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
+obstacle1(1).id = 'qwert';
+obstacle1(1).color = [ 0.4 0.4 0.4];
+obstacle1(1).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]+1;
+obstacle1(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569];
+
+obstacle1(2).id = 'qwert';
+obstacle1(2).color = [ 0.4 0.4 0.4];
+obstacle1(2).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]+5;
+obstacle1(2).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]-8;
+
+obstacle1(3).id = 'qwert';
+obstacle1(3).color = [ 0.4 0.4 0.4];
+obstacle1(3).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]-2;
+obstacle1(3).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]+8;
+
+
+% detect collision and show visualization
+tic
+[collFlags,collTime,collLoc,clearance,bodyCollLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,obstacle1,t_h,fig_num);
+ET = toc;
+
+fprintf(1,'Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
+
+for collInd = 1:length(collFlags)
+    if 1 == collFlags(collInd)
+        fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+    else
+        fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+    end
+end
+
+[~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
+
+% Create another copy of the figure zoomed into the collision
+figure(7)
+a1 = gca;
+f2 = figure(8);
+clf
+a2 = copyobj(a1,f2);
+figure(8)
+axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
+
+% assertion to ensure collision point is correct
+assert(isequal(round(collLoc,2),[-4.93 21.74]));
+%% Example 5
 % vehicle "misses" object
 
-fig_num = 5;
+fig_num = 9;
 
 % Vehicle trajectory information
 vx =20;        % longitudinal speed (m/s)
@@ -136,7 +253,7 @@ t_f = 1.5;
 x0 = [p0'; h0; vx];
 
 % Vehicle dimensional information
-vehicle.dr = 2.2;       % CG-front bumper distance (m)
+vehicle.dr = 1.8;       % CG-front bumper distance (m)
 vehicle.df = 3.5;        % CG-rear bumper distance (m)
 vehicle.w = 2.3;        % vehicle width (m)
 
@@ -166,21 +283,84 @@ end
 [~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
 
 % Create another copy of the figure zoomed into the collision
-figure(5)
+figure(9)
 a1 = gca;
-f2 = figure(6);
+f2 = figure(10);
 clf
 a2 = copyobj(a1,f2);
-figure(6)
+figure(10)
 axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
 
 % assertion to ensure near miss point is correct
 assert(isequal(round(collLoc,2),[-12.72,18.92]));
 
-%% Example 4
+%% Example 6
+% vehicle "misses" multiple object
+
+fig_num = 11;
+
+% Vehicle trajectory information
+vx =20;        % longitudinal speed (m/s)
+p0 = [1,8];     % initial position of vehicle (m,m)
+h0 = 6*pi/8;      % initial heading of vehicle (rad)
+t_f = 1.5;
+% Create a vector of the trajectory information
+x0 = [p0'; h0; vx];
+
+% Vehicle dimensional information
+vehicle.dr = 1.8;       % CG-front bumper distance (m)
+vehicle.df = 3.5;        % CG-rear bumper distance (m)
+vehicle.w = 2.3;        % vehicle width (m)
+
+% Define an octagon obstacle that represents a barrel
+obstacle3 = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
+obstacle3(1).id = 'qwwrt';
+obstacle3(1).color = [ 0.4 0.4 0.4];
+obstacle3(1).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]-8;
+obstacle3(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]-5;
+
+obstacle3(2).id = 'qwwrt';
+obstacle3(2).color = [ 0.4 0.4 0.4];
+obstacle3(2).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]+ 5;
+obstacle3(2).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]-5;
+
+obstacle3(3).id = 'qwwrt';
+obstacle3(3).color = [ 0.4 0.4 0.4];
+obstacle3(3).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]-9;
+obstacle3(3).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]+7;
+% detect collision and show visualization
+tic
+[collFlags,collTime,collLoc,clearance,bodyCollLoc] = fcn_Patch_checkStraightCollisions(x0,vehicle,obstacle3,t_f,fig_num);
+ET = toc;
+
+
+fprintf(1,'Determined collision geometry for %d objects in %0.3f seconds.\n',length(collFlags),ET);
+
+for collInd = 1:length(collFlags)
+    if 1 == collFlags(collInd)
+        fprintf(1,'  For object %d, found a collision with TTC of %0.2f seconds at (%0.2f,%0.2f)\n',collInd,collTime(collInd),collLoc(collInd,1),collLoc(collInd,2));
+    else
+        fprintf(1,'  For object %d, no collision detected. Smallest clearance distance is %0.2f units at (%0.2f,%0.2f), occurring at %0.2f seconds.\n',collInd,clearance(collInd),collLoc(collInd,1),collLoc(collInd,2),collTime(collInd));
+    end
+end
+
+[~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
+
+% Create another copy of the figure zoomed into the collision
+figure(11)
+a1 = gca;
+f2 = figure(12);
+clf
+a2 = copyobj(a1,f2);
+figure(12)
+axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
+
+% assertion to ensure near miss point is correct
+assert(isequal(round(collLoc,2),[-12.72,18.92]));
+%% Example 7
 % multiple objects => multiple collision and misses
 
-fig_num = 7;
+fig_num = 13;
 
 % Vehicle trajectory information
 vx =20;        % longitudinal speed (m/s)
@@ -191,7 +371,7 @@ t_f = 1.5;
 x0 = [p0'; h0; vx];
 
 % Vehicle dimensional information
-vehicle.dr = 2.2;       % CG-front bumper distance (m)
+vehicle.dr = 1.8;       % CG-front bumper distance (m)
 vehicle.df = 3.5;        % CG-rear bumper distance (m)
 vehicle.w = 2.3;        % vehicle width (m)
 
@@ -205,14 +385,14 @@ obstacles(1).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]
 % Defineing second obstacle patch
 obstacles(2).id = 'qwept';
 obstacles(2).color = [ 0.4 0.4 0.4];
-obstacles(2).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184];
-obstacles(2).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]-10;
+obstacles(2).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]+3;
+obstacles(2).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]-13;
 
 % Defineing third obstacle patch
 obstacles(3).id = 'qwipt';
 obstacles(3).color = [ 0.4 0.4 0.4];
-obstacles(3).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]+5;
-obstacles(3).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569];
+obstacles(3).pointsX = [-6.159;-6.711;-6.517;-5.691;-4.715;-4.163;-4.357;-5.184]-7;
+obstacles(3).pointsY = [21.763;22.590;23.565;24.117;23.923;23.097;22.122;21.569]+6  ;
 
 % detect collision and show visualization
 tic
@@ -233,12 +413,12 @@ end
 [~,firstColl] = conditionalMin(collTime,collFlags,'== 1');
 
 % Create another copy of the figure zoomed into the collision
-figure(7)
+figure(13)
 a1 = gca;
-f2 = figure(8);
+f2 = figure(14);
 clf
 a2 = copyobj(a1,f2);
-figure(8)
+figure(14)
 axis([collLoc(firstColl,1)-2 collLoc(firstColl,1)+2 collLoc(firstColl,2)-2 collLoc(firstColl,2) + 2]);
 
 % assertion to ensure near miss point is correct

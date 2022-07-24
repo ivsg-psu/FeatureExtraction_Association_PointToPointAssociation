@@ -13,8 +13,8 @@ tf = 1;         % time horizon to check (s)
 x0 = [p0'; h0; a0; vx; R];
 % Vehicle dimensional information
 vehicle.dr = 2.2;       % CG-front bumper distance (m)
-vehicle.df = 10;        % CG-rear bumper distance (m)
-vehicle.w = 2.0;        % vehicle width (m)
+vehicle.df = 3.5;        % CG-rear bumper distance (m)
+vehicle.w = 2.3;        % vehicle width (m)
 
 % Set up a new figure (or clear the existing one)
 figure(1)

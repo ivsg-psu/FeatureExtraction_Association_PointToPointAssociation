@@ -1,4 +1,4 @@
-function [barrelPatch] = fcn_Patch_fillBarrelAtPoint(numberOfObstables,orientation)
+function [barrelPatch] = fcn_Patch_fillBarrelAtPoint(xylocation,orientation)
 % fcn_Patch_fillBarrelAtPoint
 % Plots a 2D barrel at the user's desired location with the user's desired
 % orientation
@@ -9,7 +9,7 @@ function [barrelPatch] = fcn_Patch_fillBarrelAtPoint(numberOfObstables,orientati
 %
 % INPUTS:
 %      numberOfObstables: 1x1 scalar representin number of obstacles
-%      xylocation: [1x2] matrix of [x y] points, representing the location of
+%      xylocation: [Nx2] matrix of [x y] points, representing the location of
 %      the barrel
 %      orientation: -----------,representing the orientation of the barrel
 %
@@ -74,11 +74,10 @@ end
 
 %% create new cell structure for barrel information
 barrelPatch = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
-[xlocation,ylocation] = ginput;
 
-for i = 1:numberOfObstables
-    barrelPatch(i).color = [0.6 0.6 0.6];
-    r = 1.2;
+for i = 1:size(xylocation,1)
+    barrelPatch(i).color = [1 .65 0];
+    r = 0.2;
     
     p1_x = (-r/(sqrt(2)+1));
     p1_y = -r;
@@ -104,11 +103,11 @@ for i = 1:numberOfObstables
     p8_x = (r/(sqrt(2)+1));
     p8_y = -r;
     
-    rot_mat = [cos(orientation) -sin(orientation); sin(orientation) cos(orientation)];
+    rot_mat = [cos(orientation(i)) -sin(orientation(i)); sin(orientation(i)) cos(orientation(i))];
     
     xypoints = rot_mat*[p1_x p2_x p3_x p4_x p5_x p6_x p7_x p8_x; p1_y p2_y p3_y p4_y p5_y p6_y p7_y p8_y];
     
-    barrelPatch(i).pointsX = [xypoints(1,:)]' + xlocation(i);
-    barrelPatch(i).pointsY = [xypoints(2,:)]' + ylocation(i);
+    barrelPatch(i).pointsX = [xypoints(1,:)]' + xylocation(i,1);
+    barrelPatch(i).pointsY = [xypoints(2,:)]' + xylocation(i,2);
 end
 
