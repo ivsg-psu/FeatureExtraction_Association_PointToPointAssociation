@@ -1,4 +1,4 @@
-function datasets_out = fcn_Points_addRadialNoise(datasets,R,vargargin)
+function datasets_out = fcn_Points_addRadialNoise(datasets,R)
 % fcn_Points_addRadialNoise(datasets,R)
 % Adjusts the XY positions of all datasets existing in a data structure by
 % the provided values
@@ -34,11 +34,11 @@ function datasets_out = fcn_Points_addRadialNoise(datasets,R,vargargin)
 %       See the script: script_test_fcn_Points_adjustPointSetStatistics.m
 %       for a full test suite. 
 %
-% This function was written on 2022_01_12 by C. Beal
-% Questions or comments? cbeal@bucknell.edu 
+% This function was written on 2022_07_18 by Shashank Garikipati
+% Questions or comments?
 
 % Revision history:
-%     2022_01_28
+%     2022_07_18
 %     -- wrote the code
 
 flag_do_debug = 0; % Flag to plot the results for debugging
@@ -62,7 +62,6 @@ end
 %              |_| 
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-NumSets = length(datasets);
 
 if flag_check_inputs == 1
     % Are there the right number of inputs?
@@ -83,6 +82,10 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
 % Iterate through each of the datasets and add the radial noise
+
+x = zeros([size(datasets,2) 1]);
+y = zeros([size(datasets,2) 1]);
+datasets_out = {zeros([size(datasets,2) 2])};
 for i_set= 1:size(datasets,2)
     for i = 1:size(datasets{i_set},1)
         rand_radius = R*rand;
@@ -92,7 +95,6 @@ for i_set= 1:size(datasets,2)
         x(i,1) = rand_radius*cos(rand_angle) + x_data;
         y(i,1) = rand_radius*sin(rand_angle) + y_data;
     end
-
     datasets_out{i_set} = [x y];
 end
 

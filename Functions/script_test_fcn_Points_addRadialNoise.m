@@ -19,7 +19,7 @@ origXYdatasets = fcn_Points_fillPointSampleSets;
 %% Example 1
 % shows addition of radial noise
 
-new_set1 = {[0.0 0.0]}
+new_set1 = {[0.0 0.0]};
 for i =  1:100
     datasets_out = fcn_Points_addRadialNoise(new_set1,0.5);
     fcn_Points_plotSetsXY(new_set1,1);
@@ -31,7 +31,7 @@ end
 %% Example 2
 % Addition of radial noise for one data set
 
-new_set2 = {origXYdatasets{1}}
+new_set2 = {origXYdatasets{1}}; %#ok<CCAT1> 
 datasets_out2 = fcn_Points_addRadialNoise(new_set2,1);
 fcn_Points_plotSetsXY(new_set2,2);
 fcn_Points_plotSetsXY(datasets_out2,2);
@@ -40,7 +40,7 @@ fcn_Points_plotSetsXY(datasets_out2,2);
 %% Example 3
 % Addition of radial noise for one data set
 
-new_set3 = origXYdatasets
+new_set3 = origXYdatasets;
 datasets_out3 = fcn_Points_addRadialNoise(new_set3,1);
 fcn_Points_plotSetsXY(new_set3,2);
 fcn_Points_plotSetsXY(datasets_out3,2);
@@ -48,9 +48,9 @@ fcn_Points_plotSetsXY(datasets_out3,2);
 %% Example 4
 % association of cone after adding radial noise
 
-cone_location = {[1,1]}
+cone_location = {[1,1]};
 datasets_out4 = fcn_Points_addRadialNoise(cone_location,1);
-[pairedXYdata, numMatches, nonMatchesA, nonMatchesB]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1)
+[pairedXYdata, numMatches, nonMatchesA]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1);
 
 figure(4);
 clf
@@ -74,9 +74,9 @@ end
 % paired depending on its location. random noise of upto 2 units, but
 % max association of only 1 unit
 
-cone_location = {[1,1]}
+cone_location = {[1,1]};
 datasets_out4 = fcn_Points_addRadialNoise(cone_location,2);
-[pairedXYdata, numMatches, nonMatchesA, nonMatchesB]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1)
+[pairedXYdata, numMatches, nonMatchesA,]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1);
 
 figure(5);
 clf
@@ -100,10 +100,10 @@ end
 % paired depending on its location. random noise of upto 2 units, but
 % max association of only 1 unit
 
-cone_location = {[1,1;0,0;1,2; 4,3; 5,7;3,3;3,5; 5, 4;1,5]}
+cone_location = {[1,1;0,0;1,2; 4,3; 5,7;3,3;3,5; 5, 4;1,5]};
 datasets_out4 = fcn_Points_addRadialNoise(cone_location,1.5);
 
-[pairedXYdata, numMatches, nonMatchesA, nonMatchesB]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1)
+[pairedXYdata, numMatches, nonMatchesA, nonMatchesB]  = fcn_Points_pairXYdata(cone_location{1},datasets_out4{1},1);
 
 figure(6);
 clf
