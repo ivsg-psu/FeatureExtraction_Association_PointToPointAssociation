@@ -32,6 +32,8 @@ function [conePatch] = fcn_Patch_fillConeAtPoint(xylocation,orientation)
 % Revision history:
 %      2020_01_28
 %      -- wrote the code
+%      2022_08_08 - George Bodenschatz
+%      -- Added visual detail to cones
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
@@ -77,6 +79,11 @@ conePatch = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'
 
 for i = 1:size(xylocation,1)
     conePatch(i).color = [1 .65 0];
+    conePatch(i+size(xylocation,1)).color = [1 1 1];
+    conePatch(i+2*size(xylocation,1)).color = [1 .65 0];
+    conePatch(i+3*size(xylocation,1)).color = [1 1 1];
+    conePatch(i+4*size(xylocation,1)).color = [1 .65 0];
+    conePatch(i+5*size(xylocation,1)).color = [0 0 0];
     r = 0.18;
     
     p1_x = (-r/(sqrt(2)+1));
@@ -103,11 +110,26 @@ for i = 1:size(xylocation,1)
     p8_x = (r/(sqrt(2)+1));
     p8_y = -r;
     
+    t = linspace(0,2*pi);
+    xycirclepoints = [cos(t);sin(t)];
+    
     rot_mat = [cos(orientation(i)) -sin(orientation(i)); sin(orientation(i)) cos(orientation(i))];
     
     xypoints = rot_mat*[p1_x p2_x p3_x p4_x p5_x p6_x p7_x p8_x; p1_y p2_y p3_y p4_y p5_y p6_y p7_y p8_y];
     
     conePatch(i).pointsX = [xypoints(1,:)]' + xylocation(i,1);
     conePatch(i).pointsY = [xypoints(2,:)]' + xylocation(i,2);
+    conePatch(i+size(xylocation,1)).pointsX = [(r-.03)*xycirclepoints(1,:)]' + xylocation(i,1);
+    conePatch(i+size(xylocation,1)).pointsY = [(r-.03)*xycirclepoints(2,:)]' + xylocation(i,2);
+    conePatch(i+2*size(xylocation,1)).pointsX = [(r-.06)*xycirclepoints(1,:)]' + xylocation(i,1);
+    conePatch(i+2*size(xylocation,1)).pointsY = [(r-.06)*xycirclepoints(2,:)]' + xylocation(i,2);
+    conePatch(i+3*size(xylocation,1)).pointsX = [(r-.09)*xycirclepoints(1,:)]' + xylocation(i,1);
+    conePatch(i+3*size(xylocation,1)).pointsY = [(r-.09)*xycirclepoints(2,:)]' + xylocation(i,2);
+    conePatch(i+4*size(xylocation,1)).pointsX = [(r-.12)*xycirclepoints(1,:)]' + xylocation(i,1);
+    conePatch(i+4*size(xylocation,1)).pointsY = [(r-.12)*xycirclepoints(2,:)]' + xylocation(i,2);
+    conePatch(i+5*size(xylocation,1)).pointsX = [(r-.15)*xycirclepoints(1,:)]' + xylocation(i,1);
+    conePatch(i+5*size(xylocation,1)).pointsY = [(r-.15)*xycirclepoints(2,:)]' + xylocation(i,2);
+
+    
 end
 
