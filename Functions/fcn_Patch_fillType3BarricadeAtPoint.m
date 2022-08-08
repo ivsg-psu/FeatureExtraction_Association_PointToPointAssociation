@@ -75,12 +75,17 @@ end
 type3Barricade = struct('id',{},'color',{},'primitive',{},'primparams',{},'aabb',{},'pointsX',{},'pointsY',{});
 
 for i = 1:size(xylocation,1)
-    type3Barricade(i).color = [1 .65 0];
+    type3Barricade(i).color = [.5 .5 .5];
+    type3Barricade(i+size(xylocation,1)).color = [.5 .5 .5]
+    type3Barricade(i+2*size(xylocation,1)).color = [1 .65 0]
+    
     height = 0.1;
     width = 1.2;
+    standheight = 1;
+    standwidth = .05;
     
-    p1_x = -width/2
-    p1_y = -height/2
+    p1_x = -width/2;
+    p1_y = -height/2;
 
     p2_x = -width/2;
     p2_y = height/2 ;
@@ -89,13 +94,43 @@ for i = 1:size(xylocation,1)
     p3_y = height/2;
 
     p4_x = width/2;
-    p4_y = -height/2
+    p4_y = -height/2;
+    
+    stand1p1_x = width/2;
+    stand1p1_y = standheight/2;
+    
+    stand1p2_x = width/2;
+    stand1p2_y = -standheight/2;
+    
+    stand1p3_x = width/2 - standwidth;
+    stand1p3_y = -standheight/2;
+    
+    stand1p4_x = width/2 - standwidth;
+    stand1p4_y = standheight/2;
+    
+    stand2p1_x = -width/2;
+    stand2p1_y = standheight/2;
+    
+    stand2p2_x = -width/2;
+    stand2p2_y = -standheight/2;
+    
+    stand2p3_x = -(width/2 - standwidth);
+    stand2p3_y = -standheight/2;
+    
+    stand2p4_x = -(width/2 - standwidth);
+    stand2p4_y = standheight/2;
     
     rot_mat = [cos(orientation(i)) -sin(orientation(i)); sin(orientation(i)) cos(orientation(i))];
     
     xypoints = rot_mat*[p1_x p2_x p3_x p4_x; p1_y p2_y p3_y p4_y];
-    
-    type3Barricade(i).pointsX = [xypoints(1,:)]' + xylocation(i,1);
-    type3Barricade(i).pointsY = [xypoints(2,:)]' + xylocation(i,2);
+    xystand1points = rot_mat*[stand1p1_x stand1p2_x stand1p3_x stand1p4_x; stand1p1_y stand1p2_y stand1p3_y stand1p4_y];
+    xystand2points = rot_mat*[stand2p1_x stand2p2_x stand2p3_x stand2p4_x; stand2p1_y stand2p2_y stand2p3_y stand2p4_y];
+
+    type3Barricade(i).pointsX = [xystand2points(1,:)]' + xylocation(i,1);
+    type3Barricade(i).pointsY = [xystand2points(2,:)]' + xylocation(i,2);
+    type3Barricade(i+size(xylocation,1)).pointsX = [xystand1points(1,:)]' + xylocation(i,1);
+    type3Barricade(i+size(xylocation,1)).pointsY = [xystand1points(2,:)]' + xylocation(i,2);
+    type3Barricade(i+2*size(xylocation,1)).pointsX = [xypoints(1,:)]' + xylocation(i,1);
+    type3Barricade(i+2*size(xylocation,1)).pointsY = [xypoints(2,:)]' + xylocation(i,2);
 end
 
