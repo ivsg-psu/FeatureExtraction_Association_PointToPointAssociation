@@ -12,7 +12,7 @@ function [collFlag,time,angle,collLoc,clearance,bodyLoc] = fcn_Patch_checkCollis
 %
 % FORMAT:
 %
-%       [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray,(t_f),(fig_num))
+%       [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray,(fig_num),(t_f))
 %
 % INPUTS:
 %
@@ -139,13 +139,15 @@ if flag_check_inputs == 1
 end
 
 if nargin == 5
-    t_f = varargin{1};
-    fig_num = varargin{2};
+    fig_num = varargin{1};
+    t_f = varargin{2};
     flag_do_debug = 1;
 elseif nargin == 4
-    t_f = input('time that the vehicle travels (to draw trajectory): ');
+    t_f = input('Enter time that the vehicle travels (to draw trajectory): ');
     fig_num = varargin{1};
     flag_do_debug = 1;
+else
+    flag_do_debug = 0;
 end
 
 
@@ -164,8 +166,10 @@ if Inf == abs(x0(6))
     error('This script does not handle straight line motion. Use script_test_fcn_Patch_checkStraightCollisions instead.');
 end
 
-figure(fig_num);
-hold on
+if flag_do_debug == 1
+  figure(fig_num);
+  hold on
+end
 
 % Break out some variables for easier referencing
 p0 = x0(1:2);   % Initial location of the vehicle
@@ -692,7 +696,7 @@ for patchInd = 1:Npatches
   end
 end
 
-if flag_show_pertinent_obj_points == 0
+if flag_show_pertinent_obj_points == 0 && flag_do_debug == 1
     close
 end
 
