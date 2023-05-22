@@ -19,33 +19,33 @@ function fcn_Points_checkInputsToFunctions(variable,variable_type_string)
 % INPUTS:
 %
 %      variable: the variable to check
-%
+% 
 %      variable_type_string: a string representing the variable type to
 %      check. The current strings include:
-%
+% 
 %            'station' - checks that the station type is N x 1 and is a
 %            number.
-%
+% 
 %            'stations' - checks that the station type is N x 1 and is a
 %            number, with N >= 2
-%
+% 
 %            'path'  - checks that the path type is N x 2 with N>=2
-%
+% 
 %            'path2or3D'  - checks that the path type is N x 2 or N x 3, with N>=2
-%
+% 
 %            'elevated_path'  - checks that the elevated path type is N x 3 
 %            with N>=2
-%
+% 
 %            'paths'  - checks that the path type is N x 2 with N>=3
-%
+% 
 %            'traversal' - checks if a structure with X, Y, and Station,
 %            and that each has an N x 1 vector within all of same length.
 %            Further, the Station field must be strictly increasing.
-%
+% 
 %            'traversals' - checks if a structure containing a subfield
 %            that is a cell array of traveral{i}, e.g. "data.traversal{3}",
 %            with each traversal also meeting traversal requirements.
-%
+% 
 %      Note that the variable_type_string is not case sensitive: for
 %      example, 'station' and 'Station' or 'STAtion' all give the same
 %      result.

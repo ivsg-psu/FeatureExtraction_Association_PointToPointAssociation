@@ -4,18 +4,18 @@ function dataXY = fcn_Points_fillPointSetViaUserInputs(varargin)
 % Points are collected and plotted until the user double clicks. If the
 % user right-clicks anywhere in the plot, the last point is deleted. Once
 % the user double-clicks, the results are output from the function.
-%
+% 
 % FORMAT:
-%
+% 
 %      dataXY = fcn_Points_fillPointSetViaUserInputs({fig_num})
-%
+% 
 % INPUTS:
-%
+% 
 %      (OPTIONAL INPUTS)
 %      fig_num: an integer specifying which figure to use
-%
+% 
 % OUTPUTS:
-%
+% 
 %      dataXY: matrix (Nx2) representing the X and Y points that the user
 %      clicked on the map
 %
