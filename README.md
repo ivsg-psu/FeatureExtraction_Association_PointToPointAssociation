@@ -1,33 +1,4 @@
-
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Thanks again! Now go create something AMAZING! :D
-***
-***
-***
-*** To avoid retyping too much info. Do a search and replace for the following:
-*** github_username, repo_name, twitter_handle, email, project_title, project_description
--->
-
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-
+# FeatureExtraction_Association_PointToPointAssociation
 
 <!-- PROJECT LOGO -->
 <br />
@@ -71,11 +42,39 @@ objects), and determine intersections between patch objects and circular arcs
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="structure">Repo Structure</a>
-	    <ul>
-	    <li><a href="#directories">Top-Level Directories</li>
-	    <li><a href="#functions">Functions</li>
-	    </ul>
+    <li>
+      <a href="#structure">Structure</a>
+      <ul>
+        <li><a href="#directories">Top-Level Directories</a></li>
+        <li><a href="#dependencies">Dependencies</a></li>
+      </ul>
+    </li>
+    <li>
+    <a href="#functions">Functions</a>
+    <ul>
+        <li>
+        <a href="#point-set-association-functions">Point-Set Association Functions</a>
+         <ul>
+          <li><a href="#fcn_points_checkinputstofunctions">fcn_Points_checkInputsToFunctions</a></li>
+          <li><a href="#fcn_points_fillpointsamplesets">fcn_Points_fillPointSampleSets</a></li>
+          <li><a href="#fcn_points_fillpointsetviauserinputs">fcn_Points_fillPointSetViaUserInputs</a></li>
+          <li><a href="#fcn_points_plotsetsxy">fcn_Points_plotSetsXY</a></li>
+          <li><a href="#fcn_points_pairxydata">fcn_Points_pairXYdata</a></li>
+          <li><a href="#fcn_points_calcpairstatistics">fcn_Points_calcPairStatistics</a></li>
+          <li><a href="#fcn_points_adjustpointsetstatistics">fcn_Points_adjustPointSetStatistics</a></li>
+        </ul>
+        </li>
+        <li><a href="#patch-object-creation-and-manipulation-functions">Patch Object Creation and Manipulation Functions</a></li>
+        <ul>
+          <li><a href="#fcn_patch_fillsamplepatches">fcn_Patch_fillSamplePatches</a></li>
+          <li><a href="#fcn_patch_fillpatcharrayviauserinputs">fcn_Patch_fillPatchArrayViaUserInputs</a></li>
+          <li><a href="#fcn_patch_plotpatch">fcn_Patch_plotPatch</a></li>
+          <li><a href="#fcn_patch_insertpoints">fcn_Patch_insertPoints</a></li>
+          <li><a href="#fcn_patch_determineaabb">fcn_Patch_determineAABB</a></li>
+          <li><a href="#fcn_patch_inferprimitive">fcn_Patch_inferPrimitive</a></li>
+          <li><a href="#fcn_patch_checkcollisions">fcn_Patch_checkCollisions</a></li>
+        </ul>
+      </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#license">License</a></li>
@@ -84,7 +83,7 @@ objects), and determine intersections between patch objects and circular arcs
 </details>
 
 
-
+***
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
@@ -93,7 +92,9 @@ objects), and determine intersections between patch objects and circular arcs
 MATLAB code implementation of a series of functions that associate spatial
 data. Specifically, functions are provided to determine matches between data sets of (X,Y) points, store and compare groups of associated points (patch objects), and determine intersections between patch objects and circular arcs (useful for collision detection).
 
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 
+***
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -102,10 +103,15 @@ To get a local copy up and running follow these simple steps.
 
 ### Installation
 
-1. Clone the repo
+1. Make sure to run MATLAB 2020b or higher. Why? The "digitspattern" command used in the DebugTools utilities was released late 2020 and this is used heavily in the Debug routines. If debugging is shut off, then earlier MATLAB versions will likely work, and this has been tested back to 2018 releases.
+
+2. Clone the repo
    ```sh
    git clone https://github.com/ivsg-psu/FeatureExtraction_Association_PointToPointAssociation.git
    ```
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+
+***
 
 <!-- STRUCTURE OF THE REPO -->
 ## Structure
@@ -117,9 +123,17 @@ The following are the top level directories within the repository:
 	<li>Utilities: Dependencies that are utilized but not implemented in this repository are placed in the Utilities directory. These can be single files but are most often other cloned repositories.</li>
 </ul>
 
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+
+***
 <!-- FUNCTION DEFINITIONS -->
-### Functions
-**Point-Set Association Functions**
+## Functions
+The majority of the code for the point and patch association functionalities are implemented in this directory. All functions as well as test scripts are provided.
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+### Point-Set Association Functions
 <ul>
 	<li>fcn_Points_checkInputsToFunctions: TEMPLATE function for checking arguments to functions, such as point sets, etc. to make sure the formatting and sizes are correct</li>
 	<li>fcn_Points_fillPointSampleSets: a function to load some sample data sets to use for testing the other functions</li>
@@ -130,7 +144,46 @@ The following are the top level directories within the repository:
 	<li>fcn_Points_adjustPointSetStatistics: a function to add 2D Gaussian noise and/or bias to a point set (e.g. to simulate sensor noise or bias) </li>
 </ul>
 
-**Patch Object Creation/Manipulation Functions**
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+
+***
+
+#### fcn_Points_checkInputsToFunctions
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_fillPointSampleSets
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_fillPointSetViaUserInputs
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_plotSetsXY
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_pairXYdata
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_calcPairStatistics
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_adjustPointSetStatistics
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+### Patch Object Creation and Manipulation Functions
 <ul>
 	<li>fcn_Patch_fillSamplePatches: a function to load a few sample patch objects of different sizes, shapes, and colors for testing the other patch object functions</li>
 	<li>fcn_Patch_fillPatchArrayViaUserInputs: a function that allows a user to create patch objects by choosing patch colors and then using a mouse to click in a figure window to define the vertices of the patch object</li>
@@ -140,6 +193,45 @@ The following are the top level directories within the repository:
 	<li>fcn_Patch_inferPrimitive: a function to test the fit of circular and rectangular shape primitives to the vertices of the patch object and store the best fit to the patch object attributes (or reject both fits and label the object as irregular)</li>
 	<li>fcn_Patch_checkCollisions: a function to test an array of patch objects to determine impact point and time or, for non-collisions, the closest point and time of closest approach with a rectangular object traveling in a circular trajectory of a given radius, center point, and initial heading</li>
 </ul>
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+
+***
+
+#### fcn_Patch_fillSamplePatches
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_fillPatchArrayViaUserInputs
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_plotPatch
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_insertPoints
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_determineAABB
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_inferPrimitive
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_checkCollisions
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
 Each of the functions has an associated test script, using the convention
 	```sh
 	script_test_fcn_fcnname
