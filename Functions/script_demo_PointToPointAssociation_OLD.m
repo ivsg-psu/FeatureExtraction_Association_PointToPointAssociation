@@ -189,6 +189,10 @@ shiftAngle = atan2(meanShift(2),meanShift(1));
 
 %% This is a script to exercise the function, fcn_Points_addRadialNoise
 
+
+% Load some test data sets
+origXYdatasets = fcn_Points_fillPointSampleSets;
+
 % Example 1
 % shows addition of radial noise
 
