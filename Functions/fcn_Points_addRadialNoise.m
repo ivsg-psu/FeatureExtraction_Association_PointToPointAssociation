@@ -5,7 +5,7 @@ function datasets_out = fcn_Points_addRadialNoise(datasets,R)
 %
 % FORMAT: 
 %
-%       h = fcn_Points_adjustPointSetStatistics(datasets,bias,noiseMean,(fig_num))
+%       h = fcn_Points_addRadialNoise(datasets,bias,R)
 %
 % INPUTS:
 %

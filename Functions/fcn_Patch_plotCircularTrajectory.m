@@ -1,4 +1,4 @@
-function fcn_Patch_plotCircularTrajectory(t_f,x0,vehicle,varargin)
+xfunction fcn_Patch_plotCircularTrajectory(t_f,x0,vehicle,varargin)
 % fcn_Patch_plotPatch
 % Plots a visual representation of the objects in a patch structure array
 %
