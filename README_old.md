@@ -55,15 +55,25 @@ objects), and determine intersections between patch objects and circular arcs
         <li>
         <a href="#point-set-association-functions">Point-Set Association Functions</a>
          <ul>
+          <li><a href="#fcn_points_checkinputstofunctions">fcn_Points_checkInputsToFunctions</a></li>
           <li><a href="#fcn_points_fillpointsamplesets">fcn_Points_fillPointSampleSets</a></li>
           <li><a href="#fcn_points_fillpointsetviauserinputs">fcn_Points_fillPointSetViaUserInputs</a></li>
           <li><a href="#fcn_points_plotsetsxy">fcn_Points_plotSetsXY</a></li>
           <li><a href="#fcn_points_pairxydata">fcn_Points_pairXYdata</a></li>
           <li><a href="#fcn_points_calcpairstatistics">fcn_Points_calcPairStatistics</a></li>
           <li><a href="#fcn_points_adjustpointsetstatistics">fcn_Points_adjustPointSetStatistics</a></li>
-          <li><a href="#fcn_points_addradialnoise">fcn_Points_addRadialNoise</a></li>
         </ul>
         </li>
+        <li><a href="#patch-object-creation-and-manipulation-functions">Patch Object Creation and Manipulation Functions</a></li>
+        <ul>
+          <li><a href="#fcn_patch_fillsamplepatches">fcn_Patch_fillSamplePatches</a></li>
+          <li><a href="#fcn_patch_fillpatcharrayviauserinputs">fcn_Patch_fillPatchArrayViaUserInputs</a></li>
+          <li><a href="#fcn_patch_plotpatch">fcn_Patch_plotPatch</a></li>
+          <li><a href="#fcn_patch_insertpoints">fcn_Patch_insertPoints</a></li>
+          <li><a href="#fcn_patch_determineaabb">fcn_Patch_determineAABB</a></li>
+          <li><a href="#fcn_patch_inferprimitive">fcn_Patch_inferPrimitive</a></li>
+          <li><a href="#fcn_patch_checkcollisions">fcn_Patch_checkCollisions</a></li>
+        </ul>
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
@@ -119,11 +129,7 @@ The following are the top level directories within the repository:
 
 ### Dependencies
 
-* [Errata_Tutorials_DebugTools](https://github.com/ivsg-psu/Errata_Tutorials_DebugTools) - The DebugTools repo is used for the initial automated folder setup, and for input checking and general debugging calls within subfunctions. The repo can be found at: <https://github.com/ivsg-psu/Errata_Tutorials_DebugTools>
-
-* [PathClass_v2023_02_01](https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/blob/main/Releases/PathClass_v2023_02_01.zip?raw=true) - The PathClass repo is used for plotting lane markers and trajectory. The repo can be found at: <https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/blob/main/Releases/PathClass_v2023_02_01.zip?raw=true>
-
-The dependencies are automatically installed by running the root master script
+There are no dependencies in this repo. 
 
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 
@@ -138,17 +144,81 @@ The majority of the code for the point and patch association functionalities are
 
 ### Point-Set Association Functions
 <ul>
+	<li>fcn_Points_checkInputsToFunctions: TEMPLATE function for checking arguments to functions, such as point sets, etc. to make sure the formatting and sizes are correct</li>
 	<li>fcn_Points_fillPointSampleSets: a function to load some sample data sets to use for testing the other functions</li>
 	<li>fcn_Points_fillPointSetViaUserInputs: a function that allows a user to create (X,Y) point sets by clicking in a figure with the mouse</li>
 	<li>fcn_Points_plotSetsXY: a function that plots (X,Y) point sets with various options</li>
 	<li>fcn_Points_pairXYdata: a function that associates the mutually closest points in two different point sets and returns the pairs as well as points which don't have an obvious mutual pair, in both directions</li>
 	<li>fcn_Points_calcPairStatistics: a function that calculates the statistics for paired sets of points, returning RMS deviation, variance in point locations, and the offset between the centroids of the two point sets (a measurement of the systematic "shift" between two point sets)</li>
 	<li>fcn_Points_adjustPointSetStatistics: a function to add 2D Gaussian noise and/or bias to a point set (e.g. to simulate sensor noise or bias) </li>
-    <li>fcn_Points_addRadialNoise: Adds radial noise to the datasets using R (radius of max noise) </li>
 </ul>
 
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 
+***
+
+#### fcn_Points_checkInputsToFunctions
+
+Checks the variable types commonly used in the Dataset class to ensure that
+they are correctly formed. This function is typically called at the top
+of most Dataset class functions. The input is a variable and a string
+defining the "type" of the variable. This function checks to see that
+they are compatible. For example, the 'dataset' type variables in the class
+function are N x 2 arrays of [x y] pairs; if someone had a dataset variable
+called "data_example", they could check that this fit the dataset type by
+calling fcn_Points_checkInputsToFunctions(dataset_example,'dataset'). This
+function would then check that the array was N x 2, and if it was not, it
+would send out an error warning.
+
+```MATLAB
+ fcn_Points_checkInputsToFunctions(variable,variable_type_string)
+```
+
+**INPUTS:**
+
+variable: the variable to check
+
+variable_type_string: a string representing the variable type to
+check. The current strings include:
+
+<ul>
+
+'station' - checks that the station type is N x 1 and is a
+number.
+
+'stations' - checks that the station type is N x 1 and is a
+number, with N >= 2
+
+'path'  - checks that the path type is N x 2 with N>=2
+
+'path2or3D'  - checks that the path type is N x 2 or N x 3, with N>=2
+
+'elevated_path'  - checks that the elevated path type is N x 3 
+with N>=2
+
+'paths'  - checks that the path type is N x 2 with N>=3
+
+'traversal' - checks if a structure with X, Y, and Station,
+and that each has an N x 1 vector within all of same length.
+Further, the Station field must be strictly increasing.
+
+'traversals' - checks if a structure containing a subfield
+that is a cell array of traveral{i}, e.g. "data.traversal{3}",
+with each traversal also meeting traversal requirements.
+
+
+</ul>
+
+**Note** that the variable_type_string is not case sensitive: for
+example, 'station' and 'Station' or 'STAtion' all give the same
+result.
+
+**OUTPUTS:**
+
+No explicit outputs, but produces MATLAB error outputs if conditions
+not met, with explanation within the error outputs of the problem.
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***
 
 #### fcn_Points_fillPointSampleSets
@@ -386,32 +456,264 @@ FORMAT:
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***
 
-#### fcn_Points_addRadialNoise
+### Patch Object Creation and Manipulation Functions
+<ul>
+	<li>fcn_Patch_fillSamplePatches: a function to load a few sample patch objects of different sizes, shapes, and colors for testing the other patch object functions</li>
+	<li>fcn_Patch_fillPatchArrayViaUserInputs: a function that allows a user to create patch objects by choosing patch colors and then using a mouse to click in a figure window to define the vertices of the patch object</li>
+	<li>fcn_Patch_plotPatch: a function that plots patch a patch object or an array of patch objects, optionally choosing particular patch objects from the array and/or plotting into a particular figure</li>
+	<li>fcn_Patch_insertPoints: a function that allows the user to insert one or more (X,Y) points into a patch object to add vertices to the patch object</li>
+	<li>fcn_Patch_determineAABB: a function to determine the (X,Y) extremes of the patch object and store them in the patch object attributes</li>
+	<li>fcn_Patch_inferPrimitive: a function to test the fit of circular and rectangular shape primitives to the vertices of the patch object and store the best fit to the patch object attributes (or reject both fits and label the object as irregular)</li>
+	<li>fcn_Patch_checkCollisions: a function to test an array of patch objects to determine impact point and time or, for non-collisions, the closest point and time of closest approach with a rectangular object traveling in a circular trajectory of a given radius, center point, and initial heading</li>
+</ul>
 
-Adds radial noise to the datasets using R (radius of max noise)
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+
+***
+
+#### fcn_Patch_fillSamplePatches
+
+Produces a pre-defined array of sample patch structures or loads an
+existing dataset from a file.
+
+FORMAT:
+```MATLAB
+      samplePatches = fcn_Patch_fillSamplePatches({filename})
+```
+INPUTS:
+
+     (OPTIONAL INPUTS)
+     filename: a file name from which to load data
+
+OUTPUTS:
+
+     samplePatches: an cell array of datasets
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_fillPatchArrayViaUserInputs
+
+A function for the user to click on the figure to generate XY data.
+Points are collected and plotted until the user double clicks. If the
+user right-clicks anywhere in the plot, the last point is deleted. Once
+the user double-clicks, the results are output from the function.
+
+FORMAT:
+```MATLAB
+     patchStruct = fcn_Patch_fillPatchArrayViaUserInputs({fig_num})
+```
+INPUTS:
+
+     (OPTIONAL INPUTS)
+     fig_num: an integer specifying which figure to use
+
+OUTPUTS:
+
+     patchStruct: structure array patch objects that the user generated
+                 via clicking in a map and selecting properties
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_plotPatch
+
+Plots a visual representation of the objects in a patch structure array
 
 FORMAT: 
 ```MATLAB
-      h = fcn_Points_addRadialNoise(datasets,bias,R)
+      [h,hpts] = fcn_Patch_plotPatch(patchArray,{fig_num},{indices})
 ```
 **INPUTS:**
 
-     datasets: a structure array containing subfields of X and Y 
-     coordinates in the following form:
-          datasets{i_set}.X
-          datasets{i_set}.Y
-     Note that i_set addresses a particular data set structure. Each set
-     will be modified separately.
-     R: radius of max noise
+     patchStruct: a structure containing subfields of X and Y coordinates
+     in the following form
+          patchArray{i_patch}.X
+          patchArray{i_patch}.Y
+     Note that i_patch denotes an array of patch structures. Each 
+     structure will be plotted separately.
 
-                  OPTIONAL INPUTS:
-
-     fig_num: figure number
+     (OPTIONAL INPUTS)
+     fig_num: a figure number to plot into
+     indices: a vector of indices indicating which patch objects to plot
 
 **OUTPUTS:**
 
-     datasets_out: the input datasets will be modified and returned
+     h: a vector of handles to the resulting patch objects plotted in
+        order of the indices (if provided)
+     hpts: a vector of handles to the resulting points plotted on the
+           patch in order of the indices (if provided)
 
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_insertPoints
+
+Inserts a set of points into a patch structure, preserving the CCCW
+ordering of the points such that a patch graphics object can be plotted
+
+FORMAT:
+```MATLAB
+      updatedPatch = fcn_Patch_insertPoints(patchStruct,pointArray)
+```
+**INPUTS:**
+
+     patchStruct: a structure containing subfields of X and Y coordinates
+     in the following form
+          patchArray{i_patch}.X
+          patchArray{i_patch}.Y
+     Note that i_patch denotes an array of patch structures. Each
+     structure will be plotted separately.
+     pointArray: an N x 2 matrix with column-wise X and Y coordinates
+                 of points to insert into the patch
+
+**OUTPUTS:**
+
+     patchStruct: the updated patch structure with the points added
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_determineAABB
+
+Determine the axis-aligned bounding box for a patch structure or array of
+patch structures
+
+FORMAT:
+```MATLAB
+      patchArray = fcn_Patch_determineAABB(patchArray,{fig_num},{indices})
+```
+INPUTS:
+
+     patchStruct: a structure containing subfields of X and Y coordinates
+     in the following form
+          patchArray{i_patch}.X
+          patchArray{i_patch}.Y
+     Note that i_patch denotes an array of patch structures. Each
+     structure will be plotted separately.
+
+
+     (OPTIONAL INPUTS)
+     fig_num: a figure number to plot into
+     indices: a vector of indices indicating which patch objects to plot
+
+OUTPUTS:
+
+     patchStruct: the updated patch structure with the AABB determined or
+     updated
+
+     (OPTIONAL OUTPUTS)
+     hbb: a vector of handles to the bounding boxes in order of the 
+          indices (if provided)
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_inferPrimitive
+
+Infer the most appropriate 2D primitive shape (rectangle, circle, or
+irregular). This may be extended into 3d in the future with truncated
+rectangular pyramids and truncated cones as the primitives.
+
+FORMAT:
+```MATLAB
+      [patchArray, varargout] = fcn_Patch_inferPrimitive(patchArray,{fig_num},{indices})
+```
+**INPUTS:**
+
+     patchStruct: a structure containing subfields of X and Y coordinates
+     in the following form
+          patchArray{i_patch}.X
+          patchArray{i_patch}.Y
+     Note that i_patch denotes an array of patch structures. Each
+     structure will be plotted separately.
+
+
+     (OPTIONAL INPUTS)
+     fig_num: a figure number to plot into
+     indices: a vector of indices indicating which patch objects to plot
+
+**OUTPUTS:**
+
+     patchStruct: the updated patch structure with the AABB determined or
+     updated
+
+     (OPTIONAL OUTPUTS)
+     hpr: a vector of handles to the plotted primitives in order of the
+          indices (if provided)
+
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Patch_checkCollisions
+
+Evaluates a circular vehicle trajectory against a series of patches to
+determine whether there will be collisions between the vehicle and the
+outline of any of the patch objects.
+
+ASSUMPTIONS:
+<ul>
+1. The vehicle moves at constant speed along a circular trajectory.
+2. The vehicle is represented by a bounding rectangle.
+3. A positive trajectory radius indicates CCW travel. Negative
+indicates CW.
+</ul>
+FORMAT:
+```MATLAB
+      [collFlag,time,angle,location,clearance,bodyLoc] = fcn_Patch_checkCollisions(x0,vehicle,patchArray,(fig_num),(t_f))
+```
+**INPUTS:**
+
+     x0: a 6 x 1 vector containing the starting (x,y) coordinates of the
+          vehicle, the initial course, the body slip angle, the
+          longitudinal vehicle speed, and the signed trajectory radius in
+          (m,m), radians, radians, m/s, and m.
+     vehicle: a structure containing the vehicle properties, which must
+          include fields df, dr, w for the vehicle CG-front bumper
+          distance, CG-rear bumper distance, and body width, in meters,
+          respectively.
+     patchArray: a structure array defining the objects with which the
+          vehicle could potentially collide
+
+                              OPTIONAL INPUTS
+       
+      t_f: [1x1] time scalar for plotting purspose
+      fig_num: figure number
+
+**OUTPUTS:**
+
+     collFlag: an N x 1 vector of flags denoting whether there is a
+          collision with each of the objects
+     time: an N x 1 vector of collision times, where N is the number of
+          patch objects. Elements of the time vector will be set to Inf
+          if there is no overlap with the vehicle path.
+     angle: an N x 1 vector of angular measurements to the collision
+          locations, where N is the number of patch objects. The datum
+          for these angles is the vehicle start angle.
+     location: a N x 2 vector of collision locations, where N is the
+          number of patch objects and the columns are the x and y
+          coordinates of the collision. Elements of the location matrix
+          will be set to NaN if there is no overlap with the vehicle
+          path.
+      clearance: an N x 1 vector of minimum clearance distances between
+          the vehicle and the patch objects, where N is the number of
+          patch objects. Elements of the clearance vector will be set to
+          NaN if there is a collision with the object.
+      bodyLoc: an N x 2 vector of collision locations in vehicle body
+          fixed coordinates, where N is the number of patch objects and
+          the columns are the x and y coordinates of the collision.
+          Elements of the location matrix will be set to NaN if there is
+          no overlap with the vehicle path
+
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+Each of the functions has an associated test script, using the convention
+	```sh
+	script_test_fcn_fcnname
+	```
+where fcnname is the function name starting with "Patch" or "Point" as listed above.
 
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***

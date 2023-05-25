@@ -210,7 +210,7 @@ end
 
 new_set2 = {origXYdatasets{1}}; %#ok<CCAT1> 
 datasets_out2 = fcn_Points_addRadialNoise(new_set2,1);
-fcn_Points_plotSetsXY(new_set2,2);
+fcn_Points_plotSetsXY(new_set2,2); 
 fcn_Points_plotSetsXY(datasets_out2,2);
 
 

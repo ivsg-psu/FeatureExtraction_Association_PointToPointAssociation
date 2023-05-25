@@ -487,6 +487,264 @@ if ~exist(flag_varname,'var') || isempty(eval(flag_varname))
     eval(sprintf('%s = 1;',flag_varname));
 end
 
+%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% See http://patorjk.com/software/taag/#p=display&f=Big&t=Getting%20Started
+% 
+%    _____      _   _   _                _____ _             _           _ 
+%   / ____|    | | | | (_)              / ____| |           | |         | |
+%  | |  __  ___| |_| |_ _ _ __   __ _  | (___ | |_ __ _ _ __| |_ ___  __| |
+%  | | |_ |/ _ \ __| __| | '_ \ / _` |  \___ \| __/ _` | '__| __/ _ \/ _` |
+%  | |__| |  __/ |_| |_| | | | | (_| |  ____) | || (_| | |  | ||  __/ (_| |
+%   \_____|\___|\__|\__|_|_| |_|\__, | |_____/ \__\__,_|_|   \__\___|\__,_|
+%                                __/ |                                     
+%                               |___/                                      
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% This is a script to exercise the function, fcn_Points_fillPointSampleSets
+
+% Setup
+% Call the function to fill in an array of "dataset" type
+datasets_array = fcn_Points_fillPointSampleSets;
+
+% Example 1
+% We can save one of these as a single "dataset"
+single_path = {datasets_array{1}};
+
+fcn_Points_plotSetsXY(single_path,1);
+text(single_path{1}(1,1),single_path{1}(1,2),'Start');
+
+% Example 2
+% illustrating the different XY points on different plots
+
+for i_set = 1:length(datasets_array)
+    fcn_Points_plotSetsXY(datasets_array(i_set),(i_set+1));
+    text(datasets_array{i_set}(1,1),datasets_array{i_set}(1,2),'Start');
+end
+
+% Example 3
+% All plots on the same graph
+
+fcn_Points_plotSetsXY(datasets_array,5);
+
+
+%% This is a script to exercise the function, fcn_Points_fillPointSetViaUserInputs
+
+% Shows step by step instructions about using function
+
+fig_num = 1;
+h = figure(fig_num);
+hold on;
+
+num_iterations = input('How many point sets do you want to create? [Hit enter for default of 3]:','s');
+if isempty(num_iterations)
+    num_iterations = 3;
+else
+    num_iterations = str2double(num_iterations);
+end
+fprintf(1,'\n Filling in %.0d point sets.\n',num_iterations);
+fprintf(1,'Instructions: \n');
+fprintf(1,'Left click on the plot to create points. \n');
+fprintf(1,'Right click on the plot to remove points \n');
+fprintf(1,'Double click on the plot to end the set creation. \n');
+fprintf(1,'When the last set is completed, another plot will be created to show results. \n');
+
+    
+% Initialize the paths_array
+clear point_array
+point_array{num_iterations} = [0 0];
+for i_set = 1:num_iterations
+    
+    % Set the title header
+    UserData.title_header = sprintf('Set %.0d of %.0d',i_set,num_iterations);
+    
+    % Save the results
+    set(gcf,'UserData',UserData);
+    
+    pointsXY = fcn_Points_fillPointSetViaUserInputs(fig_num);
+    point_array{i_set} = pointsXY;
+end
+
+clear data, close;
+% Plot the results
+fig_num = 13;
+fcn_Points_plotSetsXY(point_array,fig_num);
+
+%% This is a script to exercise the function, fcn_Points_plotSetsXY
+
+% Example 1
+% Plots XY positions of one dataset
+fig_num = 1;
+
+dataset = {};
+
+dataset{1} = [1,21;
+              2,2;
+              3,3;
+              4,1;
+              5,4;
+              6,32;
+              7,0.5];
+
+fcn_Points_plotSetsXY(dataset,fig_num)
+
+% Example 2
+% Plots XY positions of three datasets
+
+dataset2 = {};
+dataset2{1} = [1,21;
+              2,2;
+              3,3;
+              4,1;
+              5,4;
+              6,32;
+              7,0.5];
+
+dataset2{2} = dataset{1}*1.8+0.3;
+
+dataset2{3} = [9,2;
+              8,0;
+              2,5;
+              1,1;
+              6,4;
+              10,31;
+              2,1];
+
+fcn_Points_plotSetsXY(dataset2,2)
+
+% Example 3
+% Plots from a sample data set inside fcn_Points_fillPointSampleSets
+
+fig_num = 3;
+datasets3 = fcn_Points_fillPointSampleSets;
+
+fcn_Points_plotSetsXY(datasets3,fig_num);
+
+for i_set = 1:length(datasets3)
+    text(datasets3{i_set}(1,1),datasets3{i_set}(1,2),'Start');
+end
+
+%% This is a script to exercise the function, fcn_Points_pairXYdata
+
+% Load up some data (simple xy points for now)
+load testDatasetVehicle.mat
+
+% Call the pairing function to obtain the matrix of paired XY data without
+% a limiting radius
+%[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyData{1},xyData{2});
+
+% Define a maximum radius within which to consider data points as pairs
+pairRadius = 1.0;
+
+% Call the pairing function to obtain the matrix of paired XY data
+[pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyData{1},xyData{2},pairRadius);
+
+
+% Now plot the matches with stars in various colors (to identify the pairs)
+figure(17);
+clf
+hold on
+quiver(pairedXYdata(:,1),pairedXYdata(:,2),pairedXYdata(:,3)-pairedXYdata(:,1),pairedXYdata(:,4)-pairedXYdata(:,2),0,'k','linewidth',1)
+
+for i = 1:numMatches
+    plot([pairedXYdata(i,1) pairedXYdata(i,3)],[pairedXYdata(i,2) pairedXYdata(i,4)],'*')
+end
+% Also plot the non-matches in data set A with circles in various colors
+for i = 1+numMatches:nonMatchesA+numMatches
+    plot(pairedXYdata(i,1),pairedXYdata(i,2),'o')
+end
+% Lastly, plot the non-matches in data set B with squares in various colors
+for i = 1+numMatches+nonMatchesA:nonMatchesA+numMatches+nonMatchesA
+    plot(pairedXYdata(i,3),pairedXYdata(i,4),'d')
+end
+
+
+%% This is a script to exercise the function, fcn_Points_calcPairStatistics
+
+% Static test data for testing
+ pairedXYdata = [5.93317972350230,88.8321167883212,6.51881720430108,88.6921965317919;10.5414746543779,91.7518248175182,10.3718637992832,90.8598265895954;8.00691244239631,85.0364963503650,8.40053763440860,85.0794797687861;11.9239631336406,86.7883211678832,11.6263440860215,86.2355491329480;9.61981566820277,80.6569343065693,10.1030465949821,81.0332369942196;14.4585253456221,82.1167883211679,13.9560931899642,81.6112716763006;11.6935483870968,75.4014598540146,12.2535842293907,75.5419075144509;16.5322580645161,76.8613138686131,16.0170250896057,76.9869942196532;14.2281105990783,70.4379562043796,14.6729390681004,71.2066473988439;18.8364055299539,73.0656934306569,18.4363799283154,72.5072254335260;16.7626728110599,65.4744525547445,17.1818996415771,66.2933526011560;21.6013824884793,68.1021897810219,21.3037634408602,67.1604046242775;19.0668202764977,61.3868613138686,19.6908602150538,61.9580924855491;21.6013824884793,57.2992700729927,21.9310035842294,57.9118497109826;26.9009216589862,59.0510948905109,26.3216845878136,58.4898843930636;29.4354838709677,56.1313868613139,29.0098566308244,55.5997109826590;28.0529953917051,50.0000000000000,28.6514336917563,49.8193641618497;32.4308755760369,53.5036496350365,31.6980286738351,53.1430635838150;36.1175115207373,51.7518248175182,35.8198924731183,50.9754335260115;34.9654377880184,46.7883211678832,34.5654121863799,47.3627167630058;52.9377880184332,50.2919708029197,52.3073476702509,50.8309248554913;53.1682027649770,57.8832116788321,52.9345878136201,57.0447976878613;55.7027649769585,52.6277372262774,55.1747311827957,52.5650289017341;55.7027649769585,60.8029197080292,55.6227598566308,59.9349710982659;58.9285714285714,55.8394160583942,58.2213261648746,56.4667630057803;58.9285714285714,63.4306569343066,58.6693548387097,62.6806358381503;62.1543778801843,57.8832116788321,61.5367383512545,57.7673410404624;65.3801843317972,58.4671532846715,64.6729390681004,58.6343930635838;72.0622119815668,55.2554744525547,71.8413978494624,55.7442196531792;77.3617511520737,60.5109489051095,76.6801075268817,59.9349710982659;80.3571428571429,56.7153284671533,79.9059139784946,56.0332369942196;83.3525345622120,48.2481751824817,82.6836917562724,48.5187861271676;88.4216589861751,52.6277372262774,87.8808243727599,51.8424855491329;87.0391705069124,45.9124087591241,86.6263440860215,46.0621387283237;91.6474654377880,50.0000000000000,91.1066308243728,49.5303468208092;91.4170506912442,44.7445255474453,90.8378136200717,44.6170520231214;95.5645161290323,48.2481751824817,95.0492831541219,47.6517341040462;95.1036866359447,42.9927007299270,94.6012544802867,43.3164739884393];
+
+% Run the statistics on the paired data
+[errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(pairedXYdata);
+
+% Post-process the shift to extract a distance and an angle for easy visual
+% checking of the data
+shiftDist = norm(meanShift,2);
+shiftAngle = atan2(meanShift(2),meanShift(1));
+
+%% This is a script to exercise the function, fcn_Points_adjustPointSetStatistics 
+
+% Load some test data sets
+origXYdatasets = fcn_Points_fillPointSampleSets;
+
+%Corrupt one set of test data with only a systematic bias (for each)
+biasedXYdataset = fcn_Points_adjustPointSetStatistics(origXYdatasets(1),[-0.1 0.1],zeros(1,2),zeros(1,2));
+
+fh(1) = figure;
+axis equal
+grid on
+xlabel('x [m]')
+ylabel('y [m]')
+    
+horig(1) = fcn_Points_plotSetsXY(origXYdatasets(1),fh(1))
+set(horig(1),'color','blue');
+hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,fh(1))
+set(hcorr(1),'marker','*')
+set(hcorr(1),'color','blue');
+legend([horig(1) hcorr(1)],{'Original data','Biased data'})
+
+% Call the pairing function to obtain pair the original data with the
+% biased data
+[pairedXYdataBias, numMatchesBias, nonMatchesABias, nonMatchesBBias] = fcn_Points_pairXYdata(origXYdatasets{1},biasedXYdataset{:});
+
+% Calculate the statistics for the biased data set relative to the original
+[errRMSBias,errVarBias,meanShiftBias] = fcn_Points_calcPairStatistics(pairedXYdataBias(1:numMatchesBias,:));
+
+% Plot to provide a visual inspection of the bias
+figure(17);
+clf
+hold on
+quiver(pairedXYdataBias(:,1),pairedXYdataBias(:,2),pairedXYdataBias(:,3)-pairedXYdataBias(:,1),pairedXYdataBias(:,4)-pairedXYdataBias(:,2),0,'k','linewidth',1)
+for i = 1:size(pairedXYdataBias,1)
+    plot([pairedXYdataBias(i,1) pairedXYdataBias(i,3)],[pairedXYdataBias(i,2) pairedXYdataBias(i,4)],'*')
+end
+
+%% This is a script to exercise the function, fcn_Points_addRadialNoise
+
+
+% Load some test data sets
+origXYdatasets = fcn_Points_fillPointSampleSets;
+
+% Example 1
+% shows addition of radial noise
+
+new_set1 = {[0.0 0.0]};
+for i =  1:100
+    datasets_out = fcn_Points_addRadialNoise(new_set1,0.5);
+    fcn_Points_plotSetsXY(new_set1,1);
+    fcn_Points_plotSetsXY(datasets_out,1);
+    axis([-1 1 -1 1])
+    axis square
+end
+
+% Example 2
+% Addition of radial noise for one data set
+
+new_set2 = {origXYdatasets{1}}; %#ok<CCAT1> 
+datasets_out2 = fcn_Points_addRadialNoise(new_set2,1);
+fcn_Points_plotSetsXY(new_set2,2); 
+fcn_Points_plotSetsXY(datasets_out2,2);
+
+
+% Example 3
+% Addition of radial noise for one data set
+
+new_set3 = origXYdatasets;
+datasets_out3 = fcn_Points_addRadialNoise(new_set3,1);
+fcn_Points_plotSetsXY(new_set3,2);
+fcn_Points_plotSetsXY(datasets_out3,2);
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _____       _

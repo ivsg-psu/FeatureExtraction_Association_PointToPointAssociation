@@ -1,7 +1,6 @@
 function datasets_out = fcn_Points_addRadialNoise(datasets,R)
 % fcn_Points_addRadialNoise(datasets,R)
-% Adjusts the XY positions of all datasets existing in a data structure by
-% the provided values
+% Adds radial noise to the datasets using R (radius of max noise)
 %
 % FORMAT: 
 %
