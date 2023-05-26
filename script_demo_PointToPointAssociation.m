@@ -371,12 +371,6 @@ fprintf(1,'The variance is %.4f. \n',errVar);
 fprintf(1,'The meanShift is %.4f. \n',meanShift);
 
 
-
-% % Post-process the shift to extract a distance and an angle for easy visual
-% % checking of the data
-% shiftDist = norm(meanShift,2);
-% shiftAngle = atan2(meanShift(2),meanShift(1));
-
 %% This is a script to exercise the function, fcn_Points_pairXYdata
 
 % Load up some data (simple xy points for now)
@@ -536,7 +530,8 @@ script_AssociatePointsIncremental
 
 %%%%%%%%%%%%%%%%%%%%%% END OF SCRIPT %%%%%%%%%%%%%%%%%%%%%%%
 
-
+Photo by <a href="https://unsplash.com/@luism_arias?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">luis arias</a> on <a href="https://unsplash.com/photos/xyrz9dAGe6A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+  
 
 
 
