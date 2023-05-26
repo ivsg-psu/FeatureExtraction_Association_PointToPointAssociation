@@ -55,13 +55,14 @@ objects), and determine intersections between patch objects and circular arcs
         <li>
         <a href="#point-set-association-functions">Point-Set Association Functions</a>
          <ul>
+         <li><a href="#fcn_points_plotsetsxy">fcn_Points_plotSetsXY</a></li>
           <li><a href="#fcn_points_fillpointsamplesets">fcn_Points_fillPointSampleSets</a></li>
           <li><a href="#fcn_points_fillpointsetviauserinputs">fcn_Points_fillPointSetViaUserInputs</a></li>
-          <li><a href="#fcn_points_plotsetsxy">fcn_Points_plotSetsXY</a></li>
-          <li><a href="#fcn_points_pairxydata">fcn_Points_pairXYdata</a></li>
-          <li><a href="#fcn_points_calcpairstatistics">fcn_Points_calcPairStatistics</a></li>
           <li><a href="#fcn_points_adjustpointsetstatistics">fcn_Points_adjustPointSetStatistics</a></li>
           <li><a href="#fcn_points_addradialnoise">fcn_Points_addRadialNoise</a></li>
+          <li><a href="#fcn_points_calcpairstatistics">fcn_Points_calcPairStatistics</a></li>
+          <li><a href="#fcn_points_pairxydata">fcn_Points_pairXYdata</a></li>
+          <li><a href="#script_associatepointsincremental">script_AssociatePointsIncremental</a></li>
         </ul>
         </li>
       </ul>
@@ -149,6 +150,36 @@ The majority of the code for the point and patch association functionalities are
 
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 
+***
+
+#### fcn_Points_plotSetsXY
+
+Plots the XY positions of all datasets existing in a data structure. This function is used to plot the data in the cell arrays.
+
+FORMAT: 
+```MATLAB
+      h = fcn_Points_plotSetsXY(datasets,{fig_num})
+```
+**INPUTS:**
+<ul>
+datasets: a structure array containing subfields of X and Y 
+coordinates in the following form:
+
+    datasets{i_set}.X   
+    datasets{i_set}.Y
+</ul>
+Note that i_set denotes a data set structure. Each set can be
+plotted separately and all the dataset can also be plotted in the same figure.  
+
+**OUTPUTS:**
+
+h: a handle to the resulting figure
+
+**Examples:**
+
+The examples for this function are present in **script_test_fcn_Points_plotSetsXY.m**
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***
 
 #### fcn_Points_fillPointSampleSets
@@ -263,97 +294,6 @@ clicked on the map
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***
 
-#### fcn_Points_plotSetsXY
-
-Plots the XY positions of all datasets existing in a data structure
-
-FORMAT: 
-```MATLAB
-      h = fcn_Points_plotSetsXY(datasets,{fig_num})
-```
-**INPUTS:**
-<ul>
-datasets: a structure array containing subfields of X and Y 
-coordinates in the following form:
-
-    datasets{i_set}.X   
-    datasets{i_set}.Y
-</ul>
-Note that i_set denotes a data set structure. Each set will be
-plotted separately.
-
-**OUTPUTS:**
-
-h: a handle to the resulting figure
-
-**Examples:**
-
-The examples for this function are present in **script_test_fcn_Points_plotSetsXY.m**
-
-<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
-***
-
-#### fcn_Points_pairXYdata
-
-Determines the closest pairs of matching X,Y data points from two
-different data sets of (potentially) different length. The algorithm uses
-a "mutual" pairing approach, where the nearest neighbor point is computed
-for each point in each data set and then the matches between the closest
-points are paired up. The matched pairs are listed in a single matrix,
-followed by unmatched pairs from data set A and then data set B. The
-unmatched data points are padded with NaN values. The number of matched
-points as well as number of unmatched points from data set A and data set
-B are returned.
-
-
-FORMAT:
-```MATLAB
-      [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyDataA,xyDataB,(maxDist))
-```
-
-**INPUTS:**
-
-     xyDataA: an N x 2 matrix with [X Y] data in each row.
-     xyDataB: an N x 2 matrix with [X Y] data in each row.
-
-     (OPTIONAL INPUTS)
-     maxDist: a maximum radius outside of which to reject matched pairs
-
-**OUTPUTS:**
-
-     pairedXYdata: an N x 4 matrix with [X1 Y1 X2 Y2] data in each row
-     numMatches: the number of mutual matches in data sets A and B
-     nonMatchesA: the number of points in data set A without a mutual match
-     nonMatchesB: the number of points in data set B without a mutual match
-
-<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
-***
-
-#### fcn_Points_calcPairStatistics
-
-Calculates the statistics of the errors between two sets of paired XY
-data points and an overall X,Y map shift to match the centroids of the
-data sets.
-
-
-FORMAT:
-
-      [errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(pairedXYdata)
-
-INPUTS:
-
-     pairedXYdata: an N x 4 matrix with [X1 Y1 X2 Y2] data in each row.
-
-OUTPUTS:
-
-     errRMS: the RMS distances associated with the point-to-point match errors
-     errVar: the variance in the point-to-point match error distances
-     meanShift: the [X Y] shift that would cause the centroids of the
-                two data sets to match
-
-<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
-***
-
 #### fcn_Points_adjustPointSetStatistics
 
 Adjusts the XY positions of all datasets existing in a data structure by
@@ -415,6 +355,76 @@ FORMAT:
 
 <a href="#featureextraction_association_pointtopointassociation">Back to top</a>
 ***
+
+#### fcn_Points_calcPairStatistics
+
+Calculates the statistics of the errors between two sets of paired XY
+data points and an overall X,Y map shift to match the centroids of the
+data sets.
+
+
+FORMAT:
+
+      [errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(pairedXYdata)
+
+INPUTS:
+
+     pairedXYdata: an N x 4 matrix with [X1 Y1 X2 Y2] data in each row.
+
+OUTPUTS:
+
+     errRMS: the RMS distances associated with the point-to-point match errors
+     errVar: the variance in the point-to-point match error distances
+     meanShift: the [X Y] shift that would cause the centroids of the
+                two data sets to match
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### fcn_Points_pairXYdata
+
+Determines the closest pairs of matching X,Y data points from two
+different data sets of (potentially) different length. The algorithm uses
+a "mutual" pairing approach, where the nearest neighbor point is computed
+for each point in each data set and then the matches between the closest
+points are paired up. The matched pairs are listed in a single matrix,
+followed by unmatched pairs from data set A and then data set B. The
+unmatched data points are padded with NaN values. The number of matched
+points as well as number of unmatched points from data set A and data set
+B are returned.
+
+
+FORMAT:
+```MATLAB
+      [pairedXYdata, numMatches, nonMatchesA, nonMatchesB] = fcn_Points_pairXYdata(xyDataA,xyDataB,(maxDist))
+```
+
+**INPUTS:**
+
+     xyDataA: an N x 2 matrix with [X Y] data in each row.
+     xyDataB: an N x 2 matrix with [X Y] data in each row.
+
+     (OPTIONAL INPUTS)
+     maxDist: a maximum radius outside of which to reject matched pairs
+
+**OUTPUTS:**
+
+     pairedXYdata: an N x 4 matrix with [X1 Y1 X2 Y2] data in each row
+     numMatches: the number of mutual matches in data sets A and B
+     nonMatchesA: the number of points in data set A without a mutual match
+     nonMatchesB: the number of points in data set B without a mutual match
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
+#### script_AssociatePointsIncremental
+
+This script simulates a vehicle following a trajectory by detecting the nearest points usings KNN algoorithm.
+
+
+<a href="#featureextraction_association_pointtopointassociation">Back to top</a>
+***
+
 
 <!-- USAGE EXAMPLES -->
 ## Usage
