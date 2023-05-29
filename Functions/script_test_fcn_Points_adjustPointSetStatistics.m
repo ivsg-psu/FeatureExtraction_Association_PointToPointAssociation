@@ -25,19 +25,19 @@ grid on
 xlabel('x [m]')
 ylabel('y [m]')
     
-horig(1) = fcn_Points_plotSetsXY(origXYdatasets(1),fh(1))
+horig(1) = fcn_Points_plotSetsXY(origXYdatasets(1),fh(1));
 set(horig(1),'color','blue');
-hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,fh(1))
+hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,fh(1));
 set(hcorr(1),'marker','*')
 set(hcorr(1),'color','blue');
 legend([horig(1) hcorr(1)],{'Original data','Biased data'})
 
 % Call the pairing function to obtain pair the original data with the
 % biased data
-[pairedXYdataBias, numMatchesBias, nonMatchesABias, nonMatchesBBias] = fcn_Points_pairXYdata(origXYdatasets{1},biasedXYdataset{:});
+[pairedXYdataBias, numMatchesBias, ~, ~] = fcn_Points_pairXYdata(origXYdatasets{1},biasedXYdataset{:});
 
 % Calculate the statistics for the biased data set relative to the original
-[errRMSBias,errVarBias,meanShiftBias] = fcn_Points_calcPairStatistics(pairedXYdataBias(1:numMatchesBias,:));
+[~,~,~] = fcn_Points_calcPairStatistics(pairedXYdataBias(1:numMatchesBias,:));
 
 % Plot to provide a visual inspection of the bias
 figure(17);
@@ -57,9 +57,9 @@ grid on
 xlabel('x [m]')
 ylabel('y [m]')
     
-horig(2) = fcn_Points_plotSetsXY(origXYdatasets(2),fh(2))
+horig(2) = fcn_Points_plotSetsXY(origXYdatasets(2),fh(2));
 set(horig(2),'color','blue');
-hcorr(2) = fcn_Points_plotSetsXY(noise1DXYdataset,fh(2))
+hcorr(2) = fcn_Points_plotSetsXY(noise1DXYdataset,fh(2));
 set(hcorr(2),'marker','*')
 set(hcorr(2),'color','blue');
 legend([horig(2) hcorr(2)],{'Original data','Data with 1D (x) noise'})
@@ -89,9 +89,9 @@ grid on
 xlabel('x [m]')
 ylabel('y [m]')
     
-horig(3) = fcn_Points_plotSetsXY(origXYdatasets(2),fh(3))
+horig(3) = fcn_Points_plotSetsXY(origXYdatasets(2),fh(3));
 set(horig(3),'color','blue');
-hcorr(3) = fcn_Points_plotSetsXY(noise2DXYdataset,fh(3))
+hcorr(3) = fcn_Points_plotSetsXY(noise2DXYdataset,fh(3));
 set(hcorr(3),'marker','*')
 set(hcorr(3),'color','blue');
 legend([horig(3) hcorr(3)],{'Original data','Data with 2D (x) noise'})
@@ -113,9 +113,14 @@ for i = 1:size(pairedXYdataNoise2D,1)
 end
 
 %% Corrupt one set of test data with only a systematic bias (for each)
+clear datasets
 
-set1 = {[0 0]}
-biasedXYdataset = fcn_Points_adjustPointSetStatistics(set1(1),[-0.1 0.1],zeros(1,2),zeros(1,2));
+set1 = [0 0];
+datasets{1} = set1;
+bias = [-0.1 0.1];
+noiseMean = zeros(1,2);
+noiseVariance = zeros(1,2);
+biasedXYdataset = fcn_Points_adjustPointSetStatistics(datasets,bias,noiseMean,noiseVariance);
 
 fh(1) = figure;
 axis equal
@@ -123,16 +128,16 @@ grid on
 xlabel('x [m]')
 ylabel('y [m]')
     
-horig(1) = fcn_Points_plotSetsXY(set1(1),fh(1))
+horig(1) = fcn_Points_plotSetsXY(datasets,fh(1));
 set(horig(1),'color','blue');
-hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,fh(1))
+hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,fh(1));
 set(hcorr(1),'marker','*')
 set(hcorr(1),'color','blue');
 legend([horig(1) hcorr(1)],{'Original data','Biased data'})
 
 % Call the pairing function to obtain pair the original data with the
 % biased data
-[pairedXYdataBias, numMatchesBias, nonMatchesABias, nonMatchesBBias] = fcn_Points_pairXYdata(set1{1},biasedXYdataset{:});
+[pairedXYdataBias, numMatchesBias, nonMatchesABias, nonMatchesBBias] = fcn_Points_pairXYdata(datasets{1},biasedXYdataset{1});
 
 % Calculate the statistics for the biased data set relative to the original
 [errRMSBias,errVarBias,meanShiftBias] = fcn_Points_calcPairStatistics(pairedXYdataBias(1:numMatchesBias,:));
@@ -145,3 +150,7 @@ quiver(pairedXYdataBias(:,1),pairedXYdataBias(:,2),pairedXYdataBias(:,3)-pairedX
 for i = 1:size(pairedXYdataBias,1)
     plot([pairedXYdataBias(i,1) pairedXYdataBias(i,3)],[pairedXYdataBias(i,2) pairedXYdataBias(i,4)],'*')
 end
+
+
+
+

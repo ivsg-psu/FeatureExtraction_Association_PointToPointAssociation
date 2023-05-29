@@ -6,8 +6,12 @@
 % Questions or comments?
 
 % Revision history
-%     2022_07_18
-%     -- wrote the code
+% 2022_07_18
+% -- wrote the code
+% 2023_05_29 - sbrennan@psu.edu
+% -- minor rewrite, fixed header on function to actually reference this
+% script!
+
 
 % Clear out the workspace
 close all
@@ -20,12 +24,13 @@ origXYdatasets = fcn_Points_fillPointSampleSets;
 % shows addition of radial noise
 
 new_set1 = {[0.0 0.0]};
+fcn_Points_plotSetsXY(new_set1,1);
+axis([-1 1 -1 1])
+axis square
+
 for i =  1:100
     datasets_out = fcn_Points_addRadialNoise(new_set1,0.5);
-    fcn_Points_plotSetsXY(new_set1,1);
     fcn_Points_plotSetsXY(datasets_out,1);
-    axis([-1 1 -1 1])
-    axis square
 end
 
 %% Example 2
@@ -123,3 +128,16 @@ for i = 1+numMatches+nonMatchesA:nonMatchesA+numMatches+nonMatchesA
     plot(pairedXYdata(i,3),pairedXYdata(i,4),'o','MarkerSize',10,'MarkerFaceColor',[0 0 1])
 end
 
+%% Example 7
+% Addition of normal radial noise for one data set
+fig_num = 7;
+figure(fig_num);
+clf
+hold on
+grid on
+
+new_set2 = {origXYdatasets{1}}; %#ok<CCAT1> 
+flag_noise_type = 2;
+datasets_out2 = fcn_Points_addRadialNoise(new_set2,1,flag_noise_type);
+fcn_Points_plotSetsXY(new_set2,fig_num);
+fcn_Points_plotSetsXY(datasets_out2,fig_num);

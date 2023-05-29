@@ -1,6 +1,8 @@
-function datasets_out = fcn_Points_addRadialNoise(datasets,R)
+function datasets_out = fcn_Points_addRadialNoise(datasets,R,varargin)
 % fcn_Points_addRadialNoise(datasets,R)
-% Adds radial noise to the datasets using R (radius of max noise)
+% Adds radial noise to the datasets using R (radius of max noise). The
+% statistical distribution is sampled using a uniform sampling from 0 to R,
+% and uniformly sampled along 0 to 2*pi.
 %
 % FORMAT: 
 %
@@ -8,16 +10,14 @@ function datasets_out = fcn_Points_addRadialNoise(datasets,R)
 %
 % INPUTS:
 %
-%      datasets: a structure array containing subfields of X and Y 
-%      coordinates in the following form:
-%           datasets{i_set}.X
-%           datasets{i_set}.Y
-%      Note that i_set addresses a particular data set structure. Each set
-%      will be modified separately.
+%      datasets: a cell array containing matricies of Nx2, of X and Y 
+%      Note that each set will be modified separately.
 %      R: radius of max noise
 %
-%                   OPTIONAL INPUTS:
-%
+%      OPTIONAL INPUTS:
+%      flag_noise_type: a flag to set noise types
+%        1: uniform noise on R
+%        2: random normal noise
 %      fig_num: figure number
 %
 % OUTPUTS:
@@ -30,15 +30,19 @@ function datasets_out = fcn_Points_addRadialNoise(datasets,R)
 %
 % EXAMPLES:
 %      
-%       See the script: script_test_fcn_Points_adjustPointSetStatistics.m
+%       See the script: script_test_fcn_Points_addRadialNoise.m
 %       for a full test suite. 
 %
 % This function was written on 2022_07_18 by Shashank Garikipati
 % Questions or comments?
 
 % Revision history:
-%     2022_07_18
-%     -- wrote the code
+% 2022_07_18
+% -- wrote the code
+% 2023_05_29 - sbrennan@psu.edu
+% -- better comments, corrected the header
+% -- vectorized code for speed
+% -- added flag_noise_type
 
 flag_do_debug = 0; % Flag to plot the results for debugging
 flag_check_inputs = 1; % Flag to perform input checking
@@ -64,9 +68,31 @@ end
 
 if flag_check_inputs == 1
     % Are there the right number of inputs?
-    if 2 < nargin || nargin > 3
-        error('Incorrect number of input arguments')
+    narginchk(2,4);
+end
+
+% Does user want to specify the distribution?
+flag_noise_type = 1; % Flag to do a uniform distribution
+if 3<= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        flag_noise_type = temp;
     end
+end
+
+% Does user want to show the plots?
+flag_do_plot = 0; % Flag to do a plot
+if 4 == nargin
+    temp = varargin{end};
+    if ~isempty(temp)
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plot = 1;
+    end
+elseif flag_do_debug    
+    fig = figure;
+    fig_num = fig.Number;
+    flag_do_plot = 1;
 end
 
 %% Main body of the code
@@ -82,18 +108,29 @@ end
  
 % Iterate through each of the datasets and add the radial noise
 
-x = zeros([size(datasets,2) 1]);
-y = zeros([size(datasets,2) 1]);
+
 datasets_out = {zeros([size(datasets,2) 2])};
 for i_set= 1:size(datasets,2)
-    for i = 1:size(datasets{i_set},1)
-        rand_radius = R*rand;
-        rand_angle = 2*pi*rand;
-        x_data = datasets{i_set}(i,1);
-        y_data = datasets{i_set}(i,2);
-        x(i,1) = rand_radius*cos(rand_angle) + x_data;
-        y(i,1) = rand_radius*sin(rand_angle) + y_data;
+    % How long is the current data set?
+    N_data = length(datasets{i_set}(:,1));
+
+   
+    % Fill in X and Y values
+    if flag_noise_type==1
+        % Uniform random distribution on R
+        rand_radius = R*rand(N_data,1);
+        rand_angle = 2*pi*rand(N_data,1);
+    elseif flag_noise_type==2
+        % Random normal distribution on R
+        rand_radius = R*randn(N_data,1);
+        rand_angle = 2*pi*rand(N_data,1);
+    else
+        error('Unknown noise type specified.')
     end
+    x = rand_radius.*cos(rand_angle) + datasets{i_set}(:,1);
+    y = rand_radius.*sin(rand_angle) + datasets{i_set}(:,2);
+
+
     datasets_out{i_set} = [x y];
 end
 
@@ -109,7 +146,7 @@ end
 %                            __/ |
 %                           |___/ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if flag_do_debug
+if flag_do_plot
     % Nothing in here yet
 end
 

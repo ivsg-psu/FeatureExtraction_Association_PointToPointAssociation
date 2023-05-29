@@ -81,7 +81,7 @@ end
 
 % Example 1
 % Plots XY positions of one dataset
-fig_num = 8;
+fig_num = 1;
 
 dataset = {};
 
@@ -99,7 +99,7 @@ title('fcn_Points_plotSetsXY: Example plotting XY positions of one dataset','Int
 % Example 2
 % Plots XY positions of three datasets
 
-fig_num = 9;
+fig_num = 2;
 
 dataset2 = {};
 dataset2{1} = [1,21;
@@ -126,7 +126,7 @@ title('fcn_Points_plotSetsXY: Example plotting XY positions of three datasets','
 % Example 3
 % Plots from a sample data set inside fcn_Points_fillPointSampleSets
 
-fig_num = 10;
+fig_num = 3;
 datasets3 = fcn_Points_fillPointSampleSets;
 
 fcn_Points_plotSetsXY(datasets3,fig_num);
@@ -144,7 +144,7 @@ datasets_array = fcn_Points_fillPointSampleSets;
 
 % Example 1
 % We can save one of these as a single "dataset"
-fig_num = 1;
+fig_num = 11;
 single_path = {datasets_array{1}};
 
 fcn_Points_plotSetsXY(single_path,fig_num);
@@ -154,7 +154,7 @@ title('fcn_Points_plotSetsXY: Example plotting of one dataset ','Interpreter','n
 % illustrating the different XY points on different plots
 
 for i_set = 1:length(datasets_array)
-    fig_num = i_set+1;
+    fig_num = i_set*10+2;
     fcn_Points_plotSetsXY(datasets_array(i_set),fig_num);
     text(datasets_array{i_set}(1,1),datasets_array{i_set}(1,2),'Start');
     title(sprintf('fcn_Points_plotSetsXY: Example plotting of dataset: %.0d',i_set),'Interpreter','none'); 
@@ -162,7 +162,7 @@ end
 
 % Example 3
 % All plots on the same graph
-fig_num = 5;
+fig_num = 55;
 fcn_Points_plotSetsXY(datasets_array,fig_num);
 title('fcn_Points_plotSetsXY: Example plotting of all datasets in one call','Interpreter','none')
 
@@ -172,7 +172,7 @@ title('fcn_Points_plotSetsXY: Example plotting of all datasets in one call','Int
 
 % Shows step by step instructions about using function
 
-fig_num = 6;
+fig_num = 111;
 h = figure(fig_num);
 hold on;
 
@@ -206,9 +206,9 @@ for i_set = 1:num_iterations
     point_array{i_set} = pointsXY;
 end
 
-clear data, close;
+clear data; close;
 % Plot the results
-fig_num = 7;
+fig_num = 222;
 fcn_Points_plotSetsXY(point_array,fig_num);
 title('Plotting the point array (points plotted via user inputs) in a new figure','Interpreter','none')
 
@@ -227,7 +227,7 @@ biasedXYdataset = fcn_Points_adjustPointSetStatistics(origXYdatasets(1),[biasx b
 
 % Plotting the original data and biased data
 % fh(1) = figure;
-fig_num = 12;
+fig_num = 1111;
 figure(fig_num)
 clf;
 axis equal
@@ -235,9 +235,9 @@ grid on
 xlabel('x [m]')
 ylabel('y [m]')
     
-horig(1) = fcn_Points_plotSetsXY(origXYdatasets(1),figure(fig_num))
+horig(1) = fcn_Points_plotSetsXY(origXYdatasets(1),figure(fig_num));
 set(horig(1),'color','blue');
-hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,figure(fig_num))
+hcorr(1) = fcn_Points_plotSetsXY(biasedXYdataset,figure(fig_num));
 set(hcorr(1),'marker','*')
 set(hcorr(1),'color','blue');
 legend([horig(1) hcorr(1)],{'Original data','Biased data'})
@@ -251,34 +251,34 @@ origXYdatasets = fcn_Points_fillPointSampleSets;
 % Example 1
 % shows addition of radial noise
 
-fig_num = 14;
+fig_num = 11111;
 new_set1 = {[0.0 0.0]};
 
+axis([-1 1 -1 1])
+axis square
+title('fcn_Points_addRadialNoise: Demonstrates the addition of radial noise','Interpreter','none');
+fcn_Points_plotSetsXY(new_set1,fig_num);
 
 RadiusMaxNoise = 0.5;
 for i =  1:100
     datasets_out = fcn_Points_addRadialNoise(new_set1,RadiusMaxNoise);
-    fcn_Points_plotSetsXY(new_set1,fig_num);
     fcn_Points_plotSetsXY(datasets_out,fig_num);
-    title('fcn_Points_addRadialNoise: Demonstrates the addition of radial noise','Interpreter','none');
-    axis([-1 1 -1 1])
-    axis square
 end
 
 % Example 2
 % Addition of radial noise for one data set
 
-fig_num = 15;
+fig_num = 22222;
 RadiusMaxNoise = 1;
-new_set2 = {origXYdatasets{1}}; %#ok<CCAT1> 
+new_set2 = {origXYdatasets{1}}; %#ok<*CCAT1> 
 datasets_out2 = fcn_Points_addRadialNoise(new_set2,RadiusMaxNoise);
 fcn_Points_plotSetsXY(new_set2,fig_num); 
 fcn_Points_plotSetsXY(datasets_out2,fig_num);
 title('fcn_Points_addRadialNoise: Adding noise to the one of the datasets','Interpreter','none')
 
 % Example 3
-% Addition of radial noise for one data set
-fig_num = 16;
+% Addition of radial noise for many data sets
+fig_num = 33333;
 RadiusMaxNoise = 1;
 
 new_set3 = origXYdatasets;
@@ -290,27 +290,25 @@ title('fcn_Points_addRadialNoise: Adding noise to all the datasets','Interpreter
 
 %% This is a script to exercise the function, fcn_Points_calcPairStatistics
 
-% Static test data for testing
-% CalcpairedXYdata = [5.93317972350230,88.8321167883212,6.51881720430108,88.6921965317919;10.5414746543779,91.7518248175182,10.3718637992832,90.8598265895954;8.00691244239631,85.0364963503650,8.40053763440860,85.0794797687861;11.9239631336406,86.7883211678832,11.6263440860215,86.2355491329480;9.61981566820277,80.6569343065693,10.1030465949821,81.0332369942196;14.4585253456221,82.1167883211679,13.9560931899642,81.6112716763006;11.6935483870968,75.4014598540146,12.2535842293907,75.5419075144509;16.5322580645161,76.8613138686131,16.0170250896057,76.9869942196532;14.2281105990783,70.4379562043796,14.6729390681004,71.2066473988439;18.8364055299539,73.0656934306569,18.4363799283154,72.5072254335260;16.7626728110599,65.4744525547445,17.1818996415771,66.2933526011560;21.6013824884793,68.1021897810219,21.3037634408602,67.1604046242775;19.0668202764977,61.3868613138686,19.6908602150538,61.9580924855491;21.6013824884793,57.2992700729927,21.9310035842294,57.9118497109826;26.9009216589862,59.0510948905109,26.3216845878136,58.4898843930636;29.4354838709677,56.1313868613139,29.0098566308244,55.5997109826590;28.0529953917051,50.0000000000000,28.6514336917563,49.8193641618497;32.4308755760369,53.5036496350365,31.6980286738351,53.1430635838150;36.1175115207373,51.7518248175182,35.8198924731183,50.9754335260115;34.9654377880184,46.7883211678832,34.5654121863799,47.3627167630058;52.9377880184332,50.2919708029197,52.3073476702509,50.8309248554913;53.1682027649770,57.8832116788321,52.9345878136201,57.0447976878613;55.7027649769585,52.6277372262774,55.1747311827957,52.5650289017341;55.7027649769585,60.8029197080292,55.6227598566308,59.9349710982659;58.9285714285714,55.8394160583942,58.2213261648746,56.4667630057803;58.9285714285714,63.4306569343066,58.6693548387097,62.6806358381503;62.1543778801843,57.8832116788321,61.5367383512545,57.7673410404624;65.3801843317972,58.4671532846715,64.6729390681004,58.6343930635838;72.0622119815668,55.2554744525547,71.8413978494624,55.7442196531792;77.3617511520737,60.5109489051095,76.6801075268817,59.9349710982659;80.3571428571429,56.7153284671533,79.9059139784946,56.0332369942196;83.3525345622120,48.2481751824817,82.6836917562724,48.5187861271676;88.4216589861751,52.6277372262774,87.8808243727599,51.8424855491329;87.0391705069124,45.9124087591241,86.6263440860215,46.0621387283237;91.6474654377880,50.0000000000000,91.1066308243728,49.5303468208092;91.4170506912442,44.7445255474453,90.8378136200717,44.6170520231214;95.5645161290323,48.2481751824817,95.0492831541219,47.6517341040462;95.1036866359447,42.9927007299270,94.6012544802867,43.3164739884393];
-
 % Plotting a sine wave
-t=0:0.01:1; 
-f=1; 
-x=sin(2*pi*f*t);
+time=(0:0.01:1)'; 
+frequency=1; 
+x=sin(2*pi*frequency*time);
 
-figure(88); 
-plot(t,x,'LineWidth',1.5);
-title('Sinusoidal wave with a frequency of 1 Hz','Interpreter','none');
+% FOR DEBUGGING:
+% figure(88); 
+% plot(time,x,'LineWidth',1.5);
+% title('Sinusoidal wave with a frequency of 1 Hz','Interpreter','none');
 
 % creating a dataset using t and x values 
-data_set = [t;x]';
+data_set = [time x];
 
 % chainging the data set into cell array
 XYdata = {data_set};
 
 % Adding bias to XYdata
-biasx = -2.3;
-biasy = 0.9;
+biasx = -0.3;
+biasy = 0.4;
 
 noiseMean = zeros(1,2);
 noiseVariance = zeros(1,2);
@@ -342,13 +340,21 @@ OrignBiasData = [XYdata{1},biasedXYdata{1}];
 
 [errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(OrignBiasData);
 
-fprintf(1,'\n The RMS error is %.4f. \n',errRMS);
-fprintf(1,'The variance is %.4f. \n',errVar);
-fprintf(1,'The meanShift is %.4f. \n',meanShift);
+fprintf(1,'\n The true RMS error is %.4f. \n',sum(([biasx biasy]).^2,2).^0.5);
+fprintf(1,'The measured RMS error is %.4f. \n',errRMS);
+fprintf(1,'The true variance is %.4f. \n',0);
+fprintf(1,'The measured variance is %.4f. \n',errVar);
+fprintf(1,'The true meanShift in x is %.4f.\n',biasx);
+fprintf(1,'The measured meanShift in x is %.4f. \n',meanShift(1));
+fprintf(1,'The true meanShift in y is %.4f.\n', biasy);
+fprintf(1,'The measured meanShift in y is %.4f. \n',meanShift(2));
 
 % Noisy data
-RadiusMaxNoise = 0.5;
-NoisyXYData = fcn_Points_addRadialNoise(XYdata,RadiusMaxNoise);
+RadiusMaxNoise = 0.05;
+biasx = 0;
+biasy = 0;
+flag_noise_type = 2;
+NoisyXYData = fcn_Points_addRadialNoise(XYdata,RadiusMaxNoise,flag_noise_type);
 
 axis equal
 grid on
@@ -366,9 +372,14 @@ OrignNoisyData = [XYdata{1},NoisyXYData{1}];
 
 [errRMS,errVar,meanShift] = fcn_Points_calcPairStatistics(OrignNoisyData);
 
-fprintf(1,'\n The RMS error is %.4f. \n',errRMS);
-fprintf(1,'The variance is %.4f. \n',errVar);
-fprintf(1,'The meanShift is %.4f. \n',meanShift);
+fprintf(1,'\n The true RMS error is %.4f. \n',sum(([biasx biasy]).^2,2).^0.5);
+fprintf(1,'The measured RMS error is %.4f. \n',errRMS);
+fprintf(1,'The true variance is %.4f. \n',RadiusMaxNoise.^2);
+fprintf(1,'The measured variance is %.4f. \n',errVar);
+fprintf(1,'The true meanShift in x is %.4f.\n',biasx);
+fprintf(1,'The measured meanShift in x is %.4f. \n',meanShift(1));
+fprintf(1,'The true meanShift in y is %.4f.\n', biasy);
+fprintf(1,'The measured meanShift in y is %.4f. \n',meanShift(2));
 
 
 %% This is a script to exercise the function, fcn_Points_pairXYdata
@@ -401,7 +412,7 @@ for i = 1+numMatches:nonMatchesA+numMatches
     plot(pairedXYdata(i,1),pairedXYdata(i,2),'o')
 end
 % Lastly, plot the non-matches in data set B with squares in various colors
-for i = 1+numMatches+nonMatchesA:nonMatchesA+numMatches+nonMatchesA
+for i = (1+numMatches+nonMatchesA):(nonMatchesA+numMatches+nonMatchesB)
     plot(pairedXYdata(i,3),pairedXYdata(i,4),'d')
 end
 
@@ -530,7 +541,7 @@ script_AssociatePointsIncremental
 
 %%%%%%%%%%%%%%%%%%%%%% END OF SCRIPT %%%%%%%%%%%%%%%%%%%%%%%
 
-Photo by <a href="https://unsplash.com/@luism_arias?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">luis arias</a> on <a href="https://unsplash.com/photos/xyrz9dAGe6A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+% Photo by <a href="https://unsplash.com/@luism_arias?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">luis arias</a> on <a href="https://unsplash.com/photos/xyrz9dAGe6A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
   
 
 

@@ -39,11 +39,12 @@ function datasets = fcn_Points_adjustPointSetStatistics(datasets,bias,noiseMean,
 % Questions or comments? cbeal@bucknell.edu 
 
 % Revision history:
-%     2022_01_28
-%     -- wrote the code
+% 2022_01_28
+% -- wrote the code
+% 2023_05_29 - sbrennan@psu.edu
+% -- Bug fixes in call script, better comments
 
 flag_do_debug = 0; % Flag to plot the results for debugging
-flag_this_is_a_new_figure = 1; % Flag to check to see if this is a new figure
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
@@ -108,6 +109,7 @@ end
 for i_set= 1:NumSets
     % Generate the appropriate noise
     noiseMatrix = mvnrnd(noiseMean(i_set,:),diag(noiseVariance(i_set,:)),size(datasets{i_set},1));
+
     % Add the bias to the data
     datasets{i_set} = [datasets{i_set}(:,1) + bias(i_set,1), datasets{i_set}(:,2) + bias(i_set,2)];
     % Add the noise to the data

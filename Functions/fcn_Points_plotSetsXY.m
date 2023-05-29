@@ -33,11 +33,12 @@ function h = fcn_Points_plotSetsXY(datasets,varargin)
 % Questions or comments? sbrennan@psu.edu 
 
 % Revision history:
-%     2022_01_12 
-%     -- adapted for XY datasets without path ordering
+% 2022_01_12 
+% -- adapted for XY datasets without path ordering
+% 2023_05_29
+% -- fixed latent bug if user enters empty figure number
 
 flag_do_debug = 0; % Flag to plot the results for debugging
-flag_this_is_a_new_figure = 1; % Flag to check to see if this is a new figure
 flag_check_inputs = 1; % Flag to perform input checking
 
 if flag_do_debug
@@ -61,9 +62,7 @@ end
 
 if flag_check_inputs == 1
     % Are there the right number of inputs?
-    if nargin < 1 || nargin > 2
-        error('Incorrect number of input arguments')
-    end
+    narginchk(1,2);
     
     % Check the data input
     % fcn_Path_checkInputsToFunctions(traversals, 'traversals');
@@ -71,10 +70,14 @@ if flag_check_inputs == 1
 end
 
 % Does user want to show the plots?
+flag_this_is_a_new_figure = 1; % Flag to check to see if this is a new figure
 if 2 == nargin
-    fig_num = varargin{1};
-    figure(fig_num);
-    flag_this_is_a_new_figure = 0;
+    temp = varargin{1};
+    if ~isempty(temp)
+        fig_num = temp;
+        figure(fig_num);
+        flag_this_is_a_new_figure = 0;
+    end
 else    
     fig = figure;
     fig_num = fig.Number;
@@ -104,7 +107,11 @@ end
 NumSets = length(datasets);
 h = zeros(NumSets,1);
 for i_set= 1:NumSets
+    try
     h(i_set) = plot(datasets{i_set}(:,1),datasets{i_set}(:,2),'o');
+    catch
+        disp('stop here');
+    end
 end
 
 % Shut the hold off?
