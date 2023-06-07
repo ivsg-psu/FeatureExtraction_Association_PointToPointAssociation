@@ -317,7 +317,7 @@ biasedXYdata = fcn_Points_adjustPointSetStatistics(XYdata,[biasx biasy],noiseMea
 
 
 % Plotting the original and biased data on the same figure
-fig_num = 21;
+fig_num = 111111;
 figure(fig_num)
 axis equal
 grid on
@@ -358,7 +358,7 @@ NoisyXYData = fcn_Points_addRadialNoise(XYdata,RadiusMaxNoise,flag_noise_type);
 
 axis equal
 grid on
-fig_num = 51;    
+fig_num = 222222;    
 Orig = fcn_Points_plotSetsXY(XYdata,fig_num);
 set(Orig,'color','blue');
 noisY = fcn_Points_plotSetsXY(NoisyXYData,fig_num);
@@ -374,7 +374,7 @@ OrignNoisyData = [XYdata{1},NoisyXYData{1}];
 
 fprintf(1,'\n The true RMS error is %.4f. \n',sum(([biasx biasy]).^2,2).^0.5);
 fprintf(1,'The measured RMS error is %.4f. \n',errRMS);
-fprintf(1,'The true variance is %.4f. \n',RadiusMaxNoise.^2);
+fprintf(1,'The true variance is %.4f. \n',std(sqrt((OrignNoisyData(:,3)-OrignNoisyData(:,1)).^2 + (OrignNoisyData(:,4) - OrignNoisyData(:,2)).^2)).^2);
 fprintf(1,'The measured variance is %.4f. \n',errVar);
 fprintf(1,'The true meanShift in x is %.4f.\n',biasx);
 fprintf(1,'The measured meanShift in x is %.4f. \n',meanShift(1));
@@ -399,7 +399,9 @@ pairRadius = 1.0;
 
 
 % Now plot the matches with stars in various colors (to identify the pairs)
-figure(11);
+
+fig_num = 1111111;
+figure(fig_num);
 clf
 hold on
 quiver(pairedXYdata(:,1),pairedXYdata(:,2),pairedXYdata(:,3)-pairedXYdata(:,1),pairedXYdata(:,4)-pairedXYdata(:,2),0,'k','linewidth',1)
@@ -435,7 +437,9 @@ pairRadius = 3.0;
 
 
 % Now plot the matches with stars in various colors (to identify the pairs)
-figure(11);
+
+fig_num = 11111111;
+figure(fig_num);
 clf
 hold on
 quiver(pairedXYdata(:,1),pairedXYdata(:,2),pairedXYdata(:,3)-pairedXYdata(:,1),pairedXYdata(:,4)-pairedXYdata(:,2),0,'k','linewidth',1)
@@ -497,7 +501,7 @@ biasedXYdataset = fcn_Points_adjustPointSetStatistics(origXYdatasets(1),[biasx b
 
 
 % fh(1) = figure;
-fig_num = 12;
+fig_num = 111111111;
 figure(fig_num)
 set(gcf,'Position',[100 100 1200 500])
 clf;
@@ -517,8 +521,6 @@ legend([horig(1) hcorr(1)],{'Original data','Biased data'})
 
 subplot(1,2,2)
 % Plotting original data paired with biased data
-% figure(13);
-% clf
 
 grid on
 hold on
@@ -540,8 +542,6 @@ script_AssociatePointsIncremental
 
 
 %%%%%%%%%%%%%%%%%%%%%% END OF SCRIPT %%%%%%%%%%%%%%%%%%%%%%%
-
-% Photo by <a href="https://unsplash.com/@luism_arias?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">luis arias</a> on <a href="https://unsplash.com/photos/xyrz9dAGe6A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
   
 
 

@@ -107,11 +107,7 @@ end
 NumSets = length(datasets);
 h = zeros(NumSets,1);
 for i_set= 1:NumSets
-    try
     h(i_set) = plot(datasets{i_set}(:,1),datasets{i_set}(:,2),'o');
-    catch
-        disp('stop here');
-    end
 end
 
 % Shut the hold off?
